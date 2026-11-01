@@ -1,0 +1,13 @@
+ppo 1
+ppo 2
+ppo 3
+ppo 4
+ppo_noequity 0
+ppo_noequity 1
+ppo_noequity 2
+ppo_noforecast 0
+ppo_noforecast 1
+ppo_noforecast 2
+dqn 0
+dqn 1
+dqn 2
