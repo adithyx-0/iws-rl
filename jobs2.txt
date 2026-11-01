@@ -1,0 +1,12 @@
+ppo_noequity 3
+ppo_noequity 4
+ppo_noforecast 3
+ppo_noforecast 4
+ppo_long 0 500000
+ppo_long 1 500000
+ppo_long 2 500000
+ppo_long 3 500000
+ppo_long 4 500000
+a2c 0
+a2c 1
+a2c 2

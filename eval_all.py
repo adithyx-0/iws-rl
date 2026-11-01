@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import torch
 torch.set_num_threads(1)
-from stable_baselines3 import PPO, DQN
+from stable_baselines3 import PPO, DQN, A2C
 from iws_env import IWSEnv
 from baselines import all_open, random_policy, make_rota, make_greedy
 
@@ -20,6 +20,10 @@ CONDITIONS = {   # name: (env kwargs, n scenarios)
     "large_tanks":  ({"tank_days": (0.8, 1.5)}, 50),
     "noisy_demand": ({"demand_noise": 0.3}, 50),
     "five_days":    ({"n_days": 5}, 50),
+    "alpha2":       ({"alpha": 2.0}, 50),
+    "alpha8":       ({"alpha": 8.0}, 50),
+    "press10":      ({"required_pressure": 10.0}, 50),
+    "press30":      ({"required_pressure": 30.0}, 50),
 }
 METRICS = ["return", "mean_sr", "min_zone_sr", "p10_node_sr", "gini_node"]
 
@@ -30,13 +34,19 @@ def priv_greedy(env, obs):
     return 1 << int(np.argmin(fill))
 
 
+def ce_schedule(env, obs):
+    S = np.load("results/ce_schedule.npy"); h = env.t % 24
+    return int(sum(int(b) << z for z, b in enumerate(S[h])))
+
+
 def baseline_policy(name):
     return {"random": random_policy, "all_open": all_open, "rota_k1": make_rota(1), "greedy_k1": make_greedy(1),
-            "greedy_k2": make_greedy(2), "priv_greedy_k1": priv_greedy}[name]
+            "greedy_k2": make_greedy(2), "priv_greedy_k1": priv_greedy, "ce_schedule": ce_schedule}[name]
 
 
 def load_model(path):
-    return (DQN if os.path.basename(path).startswith("dqn") else PPO).load(path, device="cpu")
+    b = os.path.basename(path)
+    return (DQN if b.startswith("dqn") else A2C if b.startswith("a2c") else PPO).load(path, device="cpu")
 
 
 def run_job(job):
@@ -63,7 +73,7 @@ def run_job(job):
 
 
 def methods():
-    m = [(b, None) for b in ["random", "all_open", "rota_k1", "greedy_k1", "greedy_k2", "priv_greedy_k1"]]
+    m = [(b, None) for b in ["random", "all_open", "rota_k1", "greedy_k1", "greedy_k2", "priv_greedy_k1", "ce_schedule"]]
     m.append(("ppo_s0", "ppo_iws_s0.zip"))                      # shipped model
     for p in sorted(glob.glob("models/*.zip")):
         m.append((os.path.basename(p)[:-4], p))
@@ -83,7 +93,7 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     jobs = [(m, p, c) for m, p in methods() for c in CONDITIONS]
     t = time.time()
-    with Pool(5) as pool:
+    with Pool(9) as pool:
         rows = [r for out in pool.imap_unordered(run_job, jobs) for r in out]
     df = pd.DataFrame(rows); df["family"] = df.method.map(family)
     df.to_csv("results/episodes.csv", index=False)
