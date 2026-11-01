@@ -1,4 +1,4 @@
-# IWS-RL: understanding the project (edition 1, 1 Nov 2026)
+# IWS-RL: understanding the project (edition 2, night of 1 Nov 2026)
 
 Repo: https://github.com/adithyx-0/iws-rl  |  Plan for the next 30 hours: `docs/PLAN_v1.md`  |  Full history: `docs/PROJECT_LOG.md`
 
@@ -93,8 +93,19 @@ Hydraulic probe: at demand x8, opening all zones delivers only 54-73% of request
 
 What this means: the sanity check passes (methods spread from 0.56 to 0.72; pressure thresholds now matter: 10 m 0.703, 20 m 0.716, 30 m 0.724). PPO beats greedy k=1 by +0.112 (CI 0.103-0.120). **But PPO is only about 0.008 ahead of the fixed schedule on mean supply and is worse on the worst zone**, so there is no clear RL win yet. The gap to the ceiling is about 0.057, which is the headroom an oracle may or may not be able to use (Gate 1). PPO-no-equity, DQN and A2C have not yet been run on v2.
 
+### Oracle (Gate 1) and the effect of domain randomisation (night of 1 Nov)
+The **clairvoyant oracle** optimises the whole 72-step action sequence per test scenario with full knowledge of the future (hindsight upper bound, not a deployable policy). Its first version was invalid (it scored below PPO, so the search was too weak) and was replaced by a warm-started one.
+| Method (v2 default, 30 scenarios) | return (objective) | mean supply | worst zone |
+|---|---|---|---|
+| Oracle | -8.49 | 0.725 | 0.631 |
+| PPO | -9.48 | 0.719 | 0.601 |
+| Fixed schedule | -9.83 | 0.711 | 0.612 |
+Gate 1 rule (>= 0.02 mean supply or >= 0.05 worst-zone headroom over the best non-PPO baseline) **fails** (0.013 and 0.019), but on the objective the oracle is +0.99 return over PPO: PPO closes only ~26% of the gap between the fixed schedule and the oracle. Little headroom on mean supply, some on worst-zone fairness.
+
+**Domain randomisation (C1).** Plain PPO beats the fixed schedule in the normal setting (+0.38 return) but loses that advantage when the surge factor changes (alpha=2: -0.13, alpha=8: -0.02). PPO trained with randomised surge factor, tank sizes and budgets (3 seeds) beats the fixed schedule in every shifted condition (alpha=2 +0.39, alpha=8 +0.28, small tanks +1.03), at a cost of 0.2-0.4 return in-distribution. LSTM policies were **worse** than plain PPO (default return -11.2 and -13.9 vs -9.7), probably under-trained at 300k steps. Caveats: 3 seeds; one under-tuned fixed schedule; confidence intervals cover test scenarios, not training seeds.
+
 ## 6. Open problems and the plan
-- No real upper bound yet -> clairvoyant oracle (Gate 1).
+- Fairness Pareto curve (C2) not finished: lambda sweep running on the MacBook, the Vivobook has the main version.
 - No method contribution beyond environment + PPO -> C1 adaptive policy (domain randomisation + LSTM), C2 fairness Pareto front, C3 regime map (see `docs/PLAN_v1.md`).
 - Fixed-schedule baseline is under-tuned and wrongly named (cross-entropy search, not Bayesian optimisation).
 - No learning curves; single network; tank sizes and surge factor are assumptions; everything is simulation.
@@ -109,3 +120,4 @@ What this means: the sanity check passes (methods spread from 0.56 to 0.72; pres
 | Date | What changed |
 |---|---|
 | 1 Nov 2026 | Edition 1: project history, sources, v1 and v2 results, plan v1 |
+| night of 1 Nov | Edition 2: oracle and Gate 1, domain-randomisation and LSTM results |
