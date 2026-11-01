@@ -35,3 +35,12 @@ Added: CE-optimised open-loop daily schedule (literature-style baseline), 5 seed
 - scale_study.py: at demand_scale 6-10 heuristics disagree and the privileged greedy no longer dominates (scale 10, supply .5-.9: greedy_k2 0.632/0.604, priv 0.574/0.432, greedy_k1 0.546/0.535).
 - Scarce (30-50% supply) note: mean_sr is capped by total water, so the only meaningful metric there is the worst-zone / Gini, not mean_sr.
 - v2 environment = demand_scale 8 (set by `IWS_V2=1`, see v2cfg.py; models_v2/, results_v2/). Running: CE schedule, PPO x5, PPO-noequity x3, DQN x3 (300k steps).
+
+## 2026-11-01 - v2 results (demand_scale=8; PPO x5 at 300k steps, CE schedule, 6 baselines; 7,200 episodes; results_v2/, models_v2/)
+Not yet run on v2: PPO-noequity, DQN (queued in jobs_v2_laptopC.txt), A2C. Env frozen as git tag `env-v2`.
+- Sanity check PASSED: baselines spread 0.56-0.72 mean_sr (v1: bunched at 0.74-0.77). Pressure thresholds now matter, monotone: 10 m 0.703, 20 m 0.716, 30 m 0.724 (v1: identical).
+- Default: PPO 0.716 (worst zone 0.601) ~ CE schedule 0.708 (0.612) > random 0.672 > greedy_k2 0.648 > priv greedy 0.639 > greedy_k1 0.604.
+  PPO vs CE schedule is within ~0.008 on mean_sr and PPO is WORSE on worst-zone (0.601 vs 0.612): no clear RL win over the optimised fixed schedule. PPO vs greedy_k1 +0.112 (CI 0.103-0.120).
+- The privileged greedy is NOT an oracle (0.639 < PPO): we still lack a real upper bound.
+- Alpha: PPO robust now (alpha2 0.715, alpha8 0.701) but beats random only narrowly at alpha2, and greedy_k2 has the best worst-zone there (0.664). Domain randomisation still needed for a clean claim.
+- Scarce: all methods 0.44-0.47 mean_sr (capped by total water); judge on worst-zone only.
