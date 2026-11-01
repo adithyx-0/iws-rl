@@ -68,3 +68,16 @@ Paired return differences (mean [95% CI over 100/50 test scenarios; training-see
 - LSTM (rec) is worse than PPO everywhere (default return -11.2 vs -9.7); LSTM + DR (rec_dr) is worst (-13.9, worst-zone 0.469). Likely under-trained at 300k steps (not tested); report as negative result, do not claim LSTMs cannot help.
 - Caveats: ppo_dr/rec 3 seeds; the CE schedule baseline is a single, under-tuned run (M2 is redoing it), so "beats CE" is optimistic until then; CIs exclude seed variance.
 - Started on M1 as insurance for C2: lam sweep 0, 0.5, 2, 4 x 2 seeds (jobs_M1_pareto.txt -> models_v2/ppo_lamX_sN.zip; lam=1 is ppo). The Vivobook's own sweep goes to models_fair/.
+
+## 2 Nov 00:40 - C2 Pareto (lam sweep), M1 insurance runs
+Source: results_v2/summary.csv, condition=default, 11 conditions x 15+ families (17,400 episodes). lam=1 is `ppo` (5 seeds); others 2 seeds each.
+| lam | mean_sr | min_zone_sr | gini_node | return |
+|---|---|---|---|---|
+| 0 | 0.717 | 0.571 | 0.143 | -10.09 |
+| 0.5 | 0.716 | 0.586 | 0.150 | -9.93 |
+| 1 (ppo) | 0.716 | 0.601 | 0.148 | -9.67 |
+| 2 | 0.712 | 0.598 | 0.152 | -10.21 |
+| 4 | 0.707 | 0.635 | 0.159 | -9.79 |
+Reading: raising lam moves worst-zone supply 0.571 -> 0.635 (+0.064) for a mean-supply cost of 0.010. Monotone except lam=2 (0.598, below lam=1's 0.601; within seed noise, 2 seeds only). gini_node does NOT improve with lam (0.143 -> 0.159), so the equity term helps the worst ZONE, not node-level inequality. Not yet tested: CIs on the differences, lam>4. Caveat: 2 seeds per point.
+Also noted: lam0.5 models saved without .zip (dotted name) and were missed until renamed.
+Queued (fallback for absent Vivobook): noequity x3 + dqn x3 (models_v2), tuned CE (bo_schedule_tuned.py 40 60, seeds 0-2 -> results_v2/ce_tuned_s*.npy), then final eval_all (logs/eval_final_done.txt).
