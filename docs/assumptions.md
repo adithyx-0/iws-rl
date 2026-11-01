@@ -24,6 +24,7 @@ Source of values: `iws_env.py`, `v2cfg.py`, `eval_all.py`. "Evidence" = what sup
 - Design norm: India often uses about 135 litres/person/day. A Hubli-Dharwad study (*Water Resources Research*, 2017, "Measuring household consumption and waste in unmetered, intermittent piped water systems") found very few households actually use 135 L/person/day. [ABSTRACT/SNIPPET ONLY]
 - Vendor sizing guidance (Sintex, Trubore): roughly 500-2000 L for a household; recommended backup 2+ days for irregular supply. Vendor advice, not survey data.
 - Implication: our 0.3-0.8 days is probably BELOW typical installed storage (roughly 2 days by vendor advice). Sump + overhead tanks may explain part of that, but we have no source. Larger tanks make supply timing matter less (see `large_tanks` condition). **Say this on the limitations slide; do not defend 0.3-0.8 as realistic.**
+- Hubli-Dharwad context (search snippet, not read): before the reform most residents were supplied about every 5 days, so storage was central. This suggests our 3-day episode with 0.3-0.8 day tanks is a different regime from that city. Full text was unreachable on 2026-11-01 (eScholarship returned empty, NSF PAR refused the connection); the open-access copy at PMC4624240 and the Water Alternatives 2014 paper "Storage and non-payment" are untried leads.
 - TODO: read the Hubli-Dharwad paper and the CSE Chennai household survey for measured numbers; if found, replace the range and re-run the `small_tanks` / `large_tanks` conditions.
 
 ## 3. Modelling limitations

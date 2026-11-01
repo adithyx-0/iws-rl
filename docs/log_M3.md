@@ -30,3 +30,8 @@ Files added (all new, no existing file edited): `docs/related_work.md`, `docs/as
 - `presentation/outline.md`: 12-slide content draft; TBD slides wait on M1 final eval and M2 models.
 - `docs/faculty_message.md`: draft of T3.5 message, NOT sent.
 - Push to GitHub blocked by 403 (stale cached credentials); commits are local only.
+
+## 2026-11-01 (night) - CORE resolved, compute blocked
+- CORE preprint read at abstract-page level (engrXiv 7798): household pump thresholds, no RL/zone/equity. Not a threat to the novelty wording. `docs/related_work.md` updated.
+- Hubli-Dharwad tank-volume numbers: not obtained (eScholarship empty, NSF PAR refused). Leads: PMC4624240, Water Alternatives 2014 storage paper.
+- T3.6 spare PPO seeds 5-9: NOT started. This machine has 12 cores but no venv and no stable-baselines3/sb3-contrib; needs `python -m venv venv` + `pip install -r requirements.txt` (large torch download). Waiting for a decision.
