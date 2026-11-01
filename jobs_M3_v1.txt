@@ -1,0 +1,6 @@
+# Laptop M3 (Adithyan). OPTIONAL spare compute, run with IWS_V2=1 only if the laptop has >= 6 cores. Extra PPO seeds 5-9 (v2, 300k steps).
+train_variant.py ppo 5 300000
+train_variant.py ppo 6 300000
+train_variant.py ppo 7 300000
+train_variant.py ppo 8 300000
+train_variant.py ppo 9 300000

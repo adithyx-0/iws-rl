@@ -1,3 +1,5 @@
+> **Superseded by `docs/PLAN_v1.md` (3 laptops: M1 MacBook, M2 Vivobook, M3 Adithyan).** Kept for reference.
+
 # Three-way work split (3 laptops)
 
 Goal: finish a strong IWS-RL project faster by running independent work in parallel, with **no two people editing the same file**.

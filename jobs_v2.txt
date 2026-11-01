@@ -1,0 +1,11 @@
+ppo 0 300000
+ppo 1 300000
+ppo 2 300000
+ppo 3 300000
+ppo 4 300000
+ppo_noequity 0 300000
+ppo_noequity 1 300000
+ppo_noequity 2 300000
+dqn 0 300000
+dqn 1 300000
+dqn 2 300000

@@ -1,0 +1,7 @@
+# Laptop M2 (Vivobook). Run with IWS_V2=1. Order = priority. Outputs: models_v2/, models_fair/ (no filename clashes with other laptops).
+train_variant.py ppo_noequity 0 300000
+train_variant.py ppo_noequity 1 300000
+train_variant.py ppo_noequity 2 300000
+train_variant.py dqn 0 300000
+train_variant.py dqn 1 300000
+train_variant.py dqn 2 300000

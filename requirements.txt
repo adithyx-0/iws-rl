@@ -4,3 +4,5 @@ stable-baselines3==2.9.2
 numpy
 pandas
 matplotlib
+sb3-contrib==2.9.2
+reportlab==5.1.0   # only for docs/build_understanding.py
