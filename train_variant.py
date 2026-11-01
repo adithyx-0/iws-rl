@@ -11,7 +11,7 @@ from iws_env import IWSEnv
 from v2cfg import BASE, MODELS
 
 TRAIN_KW = {"ppo": {}, "dqn": {}, "ppo_noequity": {"equity_reward": False}, "ppo_noforecast": {"forecast": False},
-            "ppo_long": {}, "ppo_long_noequity": {"equity_reward": False}, "ppo_long_noforecast": {"forecast": False}, "a2c": {}}
+            "ppo_long": {}, "ppo_long_noequity": {"equity_reward": False}, "ppo_long_noforecast": {"forecast": False}, "a2c": {}, "ppo_dr": {"randomize": True}}
 
 if __name__ == "__main__":
     variant, seed = sys.argv[1], int(sys.argv[2])

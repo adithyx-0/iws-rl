@@ -56,13 +56,15 @@ class IWSEnv(gym.Env):
                  supply_range=(0.5, 0.9), tank_days=(0.3, 0.8), alpha=4.0,
                  required_pressure=20.0, minimum_pressure=2.0,
                  lam=1.0, equity_reward=True, forecast=True, demand_noise=0.1,
-                 zone_seed=0, source_cap=None, demand_scale=1.0):
+                 zone_seed=0, source_cap=None, demand_scale=1.0, randomize=False):
         super().__init__()
         self.Z, self.n_days = n_zones, n_days
         self.H = 24 * n_days
         self.supply_range, self.tank_days, self.alpha = supply_range, tank_days, alpha
         self.lam, self.equity_reward, self.forecast = lam, equity_reward, forecast
         self.demand_noise = demand_noise
+        self.randomize = randomize     # domain randomisation per episode (train ranges: alpha U[3,6], tank_days lo U[.2,.4] hi U[.6,1.0], supply lo U[.4,.6] hi U[.8,1.0])
+        self._base = (alpha, tank_days, supply_range)
         self.source_cap = source_cap   # max source draw per hour, in multiples of mean hourly demand (None = unlimited, v1 behaviour)
 
         wn = wntr.network.WaterNetworkModel(_net_path(network))
@@ -140,8 +142,14 @@ class IWSEnv(gym.Env):
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
         r = self.np_random
+        if self.randomize:
+            self.alpha = float(r.uniform(3, 6)); self.tank_days = (float(r.uniform(.2, .4)), float(r.uniform(.6, 1.0)))
+            self.supply_range = (float(r.uniform(.4, .6)), float(r.uniform(.8, 1.0)))
+        else:
+            self.alpha, self.tank_days, self.supply_range = self._base
         self.S = self.qbar * 86400.0 * r.uniform(*self.tank_days, self.J)   # roof tank capacity m3
         self.L = self.S * r.uniform(0.2, 0.6, self.J)                       # initial storage
+        self.L0_total = float(self.L.sum())
         self.node_scale = np.clip(1 + self.demand_noise * r.standard_normal(self.J), 0.5, 1.5)
         self.budgets = self.day_volume * r.uniform(*self.supply_range, self.n_days)
         self.tank_lvl = dict(self.tank_init)
@@ -220,6 +228,8 @@ class IWSEnv(gym.Env):
         gini = (2 * np.arange(1, n + 1) - n - 1).dot(s) / (n * s.sum() + 1e-12)
         return {"mean_sr": float(self.log["served"].sum() / self.log["desired"].sum()),
                 "min_zone_sr": float(sr_zone.min()), "zone_sr": sr_zone.round(3).tolist(),
+                "jain_zone": float(sr_zone.sum() ** 2 / (len(sr_zone) * (sr_zone ** 2).sum() + 1e-12)),
+                "ceiling": float(min(1.0, (self.budgets.sum() + self.L0_total) / self.log["desired"].sum())),
                 "gini_node": float(gini), "p10_node_sr": float(np.percentile(sr_node, 10)),
                 "budget_used": float(self.log["delivered"] / self.budgets.sum()),
                 "hyd_fill": float(self.log["delivered"] / max(self.log["requested"], 1e-9))}

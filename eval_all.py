@@ -26,7 +26,7 @@ CONDITIONS = {   # name: (env kwargs, n scenarios)
     "press10":      ({"required_pressure": 10.0}, 50),
     "press30":      ({"required_pressure": 30.0}, 50),
 }
-METRICS = ["return", "mean_sr", "min_zone_sr", "p10_node_sr", "gini_node"]
+METRICS = ["return", "mean_sr", "min_zone_sr", "p10_node_sr", "gini_node", "jain_zone", "ceiling"]
 
 
 def priv_greedy(env, obs):
@@ -45,8 +45,19 @@ def baseline_policy(name):
             "greedy_k2": make_greedy(2), "priv_greedy_k1": priv_greedy, "ce_schedule": ce_schedule}[name]
 
 
+class RecPolicy:
+    """Stateful wrapper for sb3-contrib RecurrentPPO (LSTM state carried within an episode)."""
+    def __init__(self, model): self.m = model; self.reset()
+    def reset(self): self.s = None; self.start = np.ones((1,), bool)
+    def __call__(self, env, obs):
+        a, self.s = self.m.predict(obs, state=self.s, episode_start=self.start, deterministic=True); self.start = np.zeros((1,), bool); return int(a)
+
+
 def load_model(path):
     b = os.path.basename(path)
+    if b.startswith("rec"):
+        from sb3_contrib import RecurrentPPO
+        return RecurrentPPO.load(path, device="cpu")
     return (DQN if b.startswith("dqn") else A2C if b.startswith("a2c") else PPO).load(path, device="cpu")
 
 
@@ -59,12 +70,14 @@ def run_job(job):
     env = IWSEnv(**kw)
     if path:
         model = load_model(path)
-        pol = lambda e, o: int(model.predict(o, deterministic=True)[0])
+        if os.path.basename(path).startswith("rec"): pol = RecPolicy(model)
+        else: pol = lambda e, o: int(model.predict(o, deterministic=True)[0])
     else:
         pol = baseline_policy(method)
     rows = []
     for s in range(10000, 10000 + n):
         obs, _ = env.reset(seed=s); done = False; R = 0.0; steps = 0; t0 = time.perf_counter()
+        if hasattr(pol, "reset"): pol.reset()
         while not done:
             obs, r, done, _, info = env.step(pol(env, obs)); R += r; steps += 1
         info["return"] = R

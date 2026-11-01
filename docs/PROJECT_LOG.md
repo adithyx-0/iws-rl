@@ -44,3 +44,12 @@ Not yet run on v2: PPO-noequity, DQN (queued in jobs_v2_laptopC.txt), A2C. Env f
 - The privileged greedy is NOT an oracle (0.639 < PPO): we still lack a real upper bound.
 - Alpha: PPO robust now (alpha2 0.715, alpha8 0.701) but beats random only narrowly at alpha2, and greedy_k2 has the best worst-zone there (0.664). Domain randomisation still needed for a clean claim.
 - Scarce: all methods 0.44-0.47 mean_sr (capped by total water); judge on worst-zone only.
+
+## 2026-11-01 (evening) - Gate 1: clairvoyant oracle (M1)
+- `oracle.py`: env is deterministic given the seed, so per scenario we optimise the whole 72-step action sequence (CEM + local search), warm-started from every heuristic's and every PPO seed's own action sequence -> oracle >= each of them by construction. It uses hidden information (future budgets, tank levels): an upper bound, not a deployable policy. 30 test scenarios (seeds 10000-10029), v2 default.
+- First oracle (CEM only, no PPO warm start) was INVALID: it scored below PPO (return -9.80 vs -9.48) -> search too weak. Kept as results_v2/oracle_v0_weak.csv, replaced by the warm-started one (results_v2/oracle.csv, took 27 min).
+- Valid oracle: return -8.49 | PPO -9.48 | CE schedule -9.83 | random -14.0. mean_sr: oracle 0.725, PPO 0.719, CE 0.711 (ceiling 0.775). worst zone: oracle 0.631, PPO 0.601, CE 0.612.
+- Gate 1 rule (headroom >= 0.02 mean_sr or >= 0.05 worst-zone over best non-PPO baseline): FAIL on those two metrics (0.013 and 0.019). But on the training objective the oracle is +0.99 return over PPO and +1.34 over the CE schedule, i.e. PPO closes only ~26% of the CE-to-oracle return gap. Interpretation: little headroom on mean supply, real headroom on worst-zone / the equity-weighted objective, partly unreachable (the oracle sees the future).
+- Decision: C2 (fairness Pareto) + C3 (regime map, oracle regret) are the core; C1 (LSTM + domain randomisation) is run overnight and reported as a result either way.
+- Added to env (default off): `randomize` (train ranges alpha U[3,6], tank_days lo U[.2,.4]/hi U[.6,1.0], supply lo U[.4,.6]/hi U[.8,1.0]; held-out test = alpha 2 and 8, scarce supply 0.3-0.5, small/large tanks), metrics `jain_zone`, `ceiling`.
+- Overnight (jobs_M1_v1.txt, 9 runs, 300k steps, IWS_V2=1): rec x3, rec_dr x3, ppo_dr x3 -> models_v2/.
