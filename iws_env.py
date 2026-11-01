@@ -56,13 +56,14 @@ class IWSEnv(gym.Env):
                  supply_range=(0.5, 0.9), tank_days=(0.3, 0.8), alpha=4.0,
                  required_pressure=20.0, minimum_pressure=2.0,
                  lam=1.0, equity_reward=True, forecast=True, demand_noise=0.1,
-                 zone_seed=0):
+                 zone_seed=0, source_cap=None, demand_scale=1.0):
         super().__init__()
         self.Z, self.n_days = n_zones, n_days
         self.H = 24 * n_days
         self.supply_range, self.tank_days, self.alpha = supply_range, tank_days, alpha
         self.lam, self.equity_reward, self.forecast = lam, equity_reward, forecast
         self.demand_noise = demand_noise
+        self.source_cap = source_cap   # max source draw per hour, in multiples of mean hourly demand (None = unlimited, v1 behaviour)
 
         wn = wntr.network.WaterNetworkModel(_net_path(network))
         for c in list(wn.control_name_list):
@@ -82,7 +83,7 @@ class IWSEnv(gym.Env):
                 jn.append(j); qb.append(b); xy.append(node.coordinates)
                 node.demand_timeseries_list[0].pattern_name = None   # we set demand each hour ourselves
         self.jn = jn
-        self.qbar = np.array(qb)                         # m3/s mean consumption
+        self.qbar = np.array(qb) * demand_scale          # m3/s mean consumption (demand_scale>1 stresses the hydraulics)
         xy = np.array(xy, float)
         xy = (xy - xy.mean(0)) / xy.std(0)
         self.zone = _kmeans(xy, n_zones, np.random.default_rng(zone_seed))
@@ -150,7 +151,7 @@ class IWSEnv(gym.Env):
         self.hours_since = np.zeros(self.Z)
         self._new_day()
         self.log = {"served": np.zeros(self.J), "desired": np.zeros(self.J), "daily_min_zone_sr": [],
-                    "daily_zone_sr": [], "delivered": 0.0}
+                    "daily_zone_sr": [], "delivered": 0.0, "requested": 0.0}
         return self._obs(), {}
 
     def _new_day(self):
@@ -168,6 +169,8 @@ class IWSEnv(gym.Env):
         q_req = np.where(open_j, np.minimum(self.alpha * self.qbar, need), 0.0)
         # source budget: scale requests if they would exceed what is left today
         left = max(self.budget_today - self.used_today, 0.0)
+        if self.source_cap is not None:
+            left = min(left, self.source_cap * self.day_volume / 24)
         if q_req.sum() * 3600.0 > left:
             q_req *= left / (q_req.sum() * 3600.0 + 1e-12)
         if q_req.sum() > 0:
@@ -175,6 +178,7 @@ class IWSEnv(gym.Env):
         else:
             q_del, p = np.zeros(self.J), np.zeros(self.J)
         q_del = np.minimum(q_del, q_req)
+        self.log["requested"] += q_req.sum() * 3600.0
         vin = q_del * 3600.0
         self.used_today += vin.sum()
         # household tank balance
@@ -217,7 +221,8 @@ class IWSEnv(gym.Env):
         return {"mean_sr": float(self.log["served"].sum() / self.log["desired"].sum()),
                 "min_zone_sr": float(sr_zone.min()), "zone_sr": sr_zone.round(3).tolist(),
                 "gini_node": float(gini), "p10_node_sr": float(np.percentile(sr_node, 10)),
-                "budget_used": float(self.log["delivered"] / self.budgets.sum())}
+                "budget_used": float(self.log["delivered"] / self.budgets.sum()),
+                "hyd_fill": float(self.log["delivered"] / max(self.log["requested"], 1e-9))}
 
 
 if __name__ == "__main__":

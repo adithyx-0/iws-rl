@@ -8,6 +8,7 @@ from stable_baselines3 import PPO, DQN, A2C
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 from iws_env import IWSEnv
+from v2cfg import BASE, MODELS
 
 TRAIN_KW = {"ppo": {}, "dqn": {}, "ppo_noequity": {"equity_reward": False}, "ppo_noforecast": {"forecast": False},
             "ppo_long": {}, "ppo_long_noequity": {"equity_reward": False}, "ppo_long_noforecast": {"forecast": False}, "a2c": {}}
@@ -15,8 +16,8 @@ TRAIN_KW = {"ppo": {}, "dqn": {}, "ppo_noequity": {"equity_reward": False}, "ppo
 if __name__ == "__main__":
     variant, seed = sys.argv[1], int(sys.argv[2])
     steps = int(sys.argv[3]) if len(sys.argv) > 3 else 150_000
-    kw = TRAIN_KW[variant]
-    os.makedirs("models", exist_ok=True)
+    kw = {**BASE, **TRAIN_KW[variant]}
+    os.makedirs(MODELS, exist_ok=True)
     t = time.time()
     if variant == "dqn":
         env = IWSEnv(**kw)
@@ -31,5 +32,5 @@ if __name__ == "__main__":
         model = PPO("MlpPolicy", venv, n_steps=216, batch_size=432, n_epochs=10, gamma=0.99,
                     gae_lambda=0.95, ent_coef=0.01, learning_rate=3e-4, seed=seed, verbose=0, device="cpu")
     model.learn(steps)
-    model.save(f"models/{variant}_s{seed}")
+    model.save(f"{MODELS}/{variant}_s{seed}")
     print(f"{variant} seed {seed} steps {steps} done in {time.time()-t:.0f}s", flush=True)

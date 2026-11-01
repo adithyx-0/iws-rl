@@ -2,18 +2,19 @@
 A schedule is a 24 x Z bit matrix repeated every day. Optimised with the cross-entropy method on TRAIN scenarios (seeds 0-9),
 objective = mean episode return of IWSEnv (same reward the RL agents see). Saves results/ce_schedule.npy.
 Usage: python bo_schedule.py [iters] [pop]"""
-import sys, warnings, time
+import sys, os, warnings, time
 warnings.filterwarnings("ignore")
 from multiprocessing import Pool
 import numpy as np
 from iws_env import IWSEnv
+from v2cfg import BASE, RES
 
 SEEDS = list(range(10))
 _env = None
 
 def score(bits):
     global _env
-    if _env is None: _env = IWSEnv()
+    if _env is None: _env = IWSEnv(**BASE)
     R = 0.0
     for s in SEEDS:
         obs, _ = _env.reset(seed=s); done = False
@@ -36,4 +37,4 @@ if __name__ == "__main__":
             p = 0.3 * p + 0.7 * elite.mean(0); p = np.clip(p, 0.03, 0.97)
             if sc.max() > best[0]: best = (sc.max(), cand[sc.argmax()])
             print(f"iter {it} mean {sc.mean():.2f} best {sc.max():.2f} overall {best[0]:.2f} ({time.time()-t:.0f}s)", flush=True)
-    np.save("results/ce_schedule.npy", best[1]); print(best[1].T)
+    os.makedirs(RES, exist_ok=True); np.save(f"{RES}/ce_schedule.npy", best[1]); print(best[1].T)

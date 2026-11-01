@@ -10,6 +10,7 @@ import torch
 torch.set_num_threads(1)
 from stable_baselines3 import PPO, DQN, A2C
 from iws_env import IWSEnv
+from v2cfg import BASE, MODELS, RES
 from baselines import all_open, random_policy, make_rota, make_greedy
 
 CONDITIONS = {   # name: (env kwargs, n scenarios)
@@ -35,7 +36,7 @@ def priv_greedy(env, obs):
 
 
 def ce_schedule(env, obs):
-    S = np.load("results/ce_schedule.npy"); h = env.t % 24
+    S = np.load(f"{RES}/ce_schedule.npy"); h = env.t % 24
     return int(sum(int(b) << z for z, b in enumerate(S[h])))
 
 
@@ -52,7 +53,7 @@ def load_model(path):
 def run_job(job):
     method, path, cond = job
     kw, n = CONDITIONS[cond]
-    kw = dict(kw)
+    kw = {**BASE, **kw}
     if "noforecast" in method:
         kw["forecast"] = False          # this policy was trained without the tomorrow-budget feature
     env = IWSEnv(**kw)
@@ -74,8 +75,8 @@ def run_job(job):
 
 def methods():
     m = [(b, None) for b in ["random", "all_open", "rota_k1", "greedy_k1", "greedy_k2", "priv_greedy_k1", "ce_schedule"]]
-    m.append(("ppo_s0", "ppo_iws_s0.zip"))                      # shipped model
-    for p in sorted(glob.glob("models/*.zip")):
+    if not BASE: m.append(("ppo_s0", "ppo_iws_s0.zip"))                      # shipped model
+    for p in sorted(glob.glob(f"{MODELS}/*.zip")):
         m.append((os.path.basename(p)[:-4], p))
     return m
 
@@ -90,13 +91,13 @@ def boot_ci(x, rng, B=2000):
 
 
 if __name__ == "__main__":
-    os.makedirs("results", exist_ok=True)
+    os.makedirs(RES, exist_ok=True)
     jobs = [(m, p, c) for m, p in methods() for c in CONDITIONS]
     t = time.time()
     with Pool(9) as pool:
         rows = [r for out in pool.imap_unordered(run_job, jobs) for r in out]
     df = pd.DataFrame(rows); df["family"] = df.method.map(family)
-    df.to_csv("results/episodes.csv", index=False)
+    df.to_csv(f"{RES}/episodes.csv", index=False)
     print(f"{len(jobs)} jobs, {len(df)} episodes, {time.time()-t:.0f}s")
 
     rng = np.random.default_rng(0)
@@ -110,7 +111,7 @@ if __name__ == "__main__":
             lo, hi = boot_ci(per_scn[k].values, rng)
             row.update({k: per_scn[k].mean(), k + "_lo": lo, k + "_hi": hi, k + "_seed_sd": seeds[k].std(ddof=0) if len(seeds) > 1 else np.nan})
         out.append(row)
-    summary = pd.DataFrame(out); summary.to_csv("results/summary.csv", index=False)
+    summary = pd.DataFrame(out); summary.to_csv(f"{RES}/summary.csv", index=False)
     for cond, g in df.groupby("condition"):
         base = g[g.family == "greedy_k1"].set_index("scenario")
         for fam, h in g.groupby("family"):
@@ -121,5 +122,5 @@ if __name__ == "__main__":
                 d = (per[k] - base[k]).values; lo, hi = boot_ci(d, rng)
                 row.update({k + "_diff": d.mean(), k + "_lo": lo, k + "_hi": hi})
             paired.append(row)
-    pd.DataFrame(paired).to_csv("results/paired_vs_greedy.csv", index=False)
+    pd.DataFrame(paired).to_csv(f"{RES}/paired_vs_greedy.csv", index=False)
     print("wrote results/{episodes,summary,paired_vs_greedy}.csv")
