@@ -53,3 +53,18 @@ Not yet run on v2: PPO-noequity, DQN (queued in jobs_v2_laptopC.txt), A2C. Env f
 - Decision: C2 (fairness Pareto) + C3 (regime map, oracle regret) are the core; C1 (LSTM + domain randomisation) is run overnight and reported as a result either way.
 - Added to env (default off): `randomize` (train ranges alpha U[3,6], tank_days lo U[.2,.4]/hi U[.6,1.0], supply lo U[.4,.6]/hi U[.8,1.0]; held-out test = alpha 2 and 8, scarce supply 0.3-0.5, small/large tanks), metrics `jain_zone`, `ceiling`.
 - Overnight (jobs_M1_v1.txt, 9 runs, 300k steps, IWS_V2=1): rec x3, rec_dr x3, ppo_dr x3 -> models_v2/.
+
+## 2026-11-01 (night) - C1 results: LSTM and domain randomisation (v2, 21 methods x 11 conditions, 12,600 episodes; results_v2/, previous round in results_v2/round1)
+Paired return differences (mean [95% CI over 100/50 test scenarios; training-seed variance NOT included], higher is better):
+| condition | ppo_dr - ppo | ppo_dr - CE schedule | ppo - CE schedule |
+|---|---|---|---|
+| default | -0.20 [-0.27,-0.15] | +0.17 [+0.10,+0.24] | +0.38 [+0.30,+0.44] |
+| alpha=2 (held out) | +0.53 [+0.35,+0.71] | +0.39 [+0.12,+0.68] | -0.13 [-0.47,+0.23] |
+| alpha=8 (held out) | +0.30 [+0.23,+0.36] | +0.28 [+0.16,+0.39] | -0.02 [-0.10,+0.06] |
+| small tanks | +0.56 [+0.48,+0.64] | +1.03 [+0.89,+1.18] | +0.47 [+0.32,+0.62] |
+| large tanks | -0.44 [-0.57,-0.33] | +0.42 [+0.28,+0.55] | +0.86 [+0.70,+1.03] |
+| 5 days | -0.35 [-0.44,-0.25] | +0.05 [-0.08,+0.19] | +0.39 [+0.26,+0.54] |
+- Plain PPO beats the CE schedule in-distribution but LOSES that advantage when alpha shifts (alpha=2: -0.13, alpha=8: -0.02). PPO with domain randomisation (ppo_dr, 3 seeds) beats the CE schedule in every shifted condition, at a cost of 0.2-0.4 return in-distribution. This supports C1 in its simple form (randomised training), not the LSTM.
+- LSTM (rec) is worse than PPO everywhere (default return -11.2 vs -9.7); LSTM + DR (rec_dr) is worst (-13.9, worst-zone 0.469). Likely under-trained at 300k steps (not tested); report as negative result, do not claim LSTMs cannot help.
+- Caveats: ppo_dr/rec 3 seeds; the CE schedule baseline is a single, under-tuned run (M2 is redoing it), so "beats CE" is optimistic until then; CIs exclude seed variance.
+- Started on M1 as insurance for C2: lam sweep 0, 0.5, 2, 4 x 2 seeds (jobs_M1_pareto.txt -> models_v2/ppo_lamX_sN.zip; lam=1 is ppo). The Vivobook's own sweep goes to models_fair/.
