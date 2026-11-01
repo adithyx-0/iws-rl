@@ -23,3 +23,10 @@ Files added (all new, no existing file edited): `docs/related_work.md`, `docs/as
 2. Faculty confirmation that IWS-RL is the approved topic (T3.5): message to send, not a file.
 3. Slides (T3.4): deferred until final numbers exist.
 4. When M1's final `eval_all.py` output lands, rerun plots with `--results-dir` and replace `plots/out/`.
+
+## 2026-11-01 (later) - RL prior art, slide draft, faculty message
+- Checked Hu 2020 (MBE), Hu/Gao/Zhong 2023 (Water Supply 23(7)), DRL-EPANET (NeurIPS-W 2022, JWRPM 2024): bibliographic data confirmed, abstract-level only. `docs/related_work.md` section 2 updated.
+- New lead: a "CORE" preprint on per-household refill thresholds in IWS (UNVERIFIED, seen in a search snippet). Must be read before any novelty wording is used.
+- `presentation/outline.md`: 12-slide content draft; TBD slides wait on M1 final eval and M2 models.
+- `docs/faculty_message.md`: draft of T3.5 message, NOT sent.
+- Push to GitHub blocked by 403 (stale cached credentials); commits are local only.

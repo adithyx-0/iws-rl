@@ -26,8 +26,13 @@ Flags: `ABSTRACT-ONLY` (bibliographic data confirmed by search, details from abs
 ### Gullotta et al. (2021) - ABSTRACT-ONLY (found incidentally)
 - *J. Water Resour. Plann. Manage.* 147(5): "Optimal Location of Valves to Improve Equity in Intermittent Water Distribution Systems". NSGA-II + EPA-SWMM, networks with private tanks. Design-time (valve placement), not operation.
 
-## 2. Closest RL work (no equity, not IWS) - UNVERIFIED
-Carried over from `docs/PROJECT_LOG.md` (titles/snippets only; nobody has read these): Hu et al. 2020 (DRL valve scheduling for contamination), Hu/Gao/Zhong 2023 (MADDPG pump+valve), DRL-EPANET 2022, PPO pump scheduling 2023. TODO: find exact references and confirm each lacks equity and intermittent supply.
+## 2. Closest RL work (no equity, not IWS) - ABSTRACT-ONLY (checked 2026-11-01)
+- **Hu, Cai, Zeng, Yan, Gong, Wang (2020)**, "Deep reinforcement learning based valve scheduling for pollution isolation in water distribution network", *Math. Biosci. Eng.* 17(1):105-121, doi 10.3934/mbe.2020006. State = sensor readings, actions = valve/hydrant operations, EPANET. Goal is contaminant isolation, not supply rationing or equity.
+- **Hu, Gao, Zhong (2023)**, "Multi-agent reinforcement learning framework for real-time scheduling of pump and valve in water distribution networks", *Water Supply* 23(7):2833-2846, doi 10.2166/ws.2023.163. MADDPG, beats GA/PSO/DE; objective is water loss and energy. No equity, no intermittent supply. (One index lists an arXiv ID 2408.08442 that may not match; use the DOI.)
+- **DRL-EPANET** (Belfadil, Modesto et al.): NeurIPS 2022 workshop paper; journal version *J. Water Resour. Plann. Manage.* 150(2), 2024, "Leveraging Deep Reinforcement Learning for Water Distribution Systems with Large Action Spaces and Uncertainties". Pressure control with branching dueling Q-networks on 10 real networks. Not intermittent supply, not equity.
+- **"CORE" preprint (UNVERIFIED, title/authors unknown):** a search snippet describes a preprint on per-household adaptive refill thresholds for pump scheduling in intermittent supply. Not RL on zone scheduling as far as the snippet says, but it concerns household storage in IWS. **Find it and read it before claiming novelty.**
+- "PPO pump scheduling 2023" from M1's log: not re-found; reference still unconfirmed.
+- A 2026 *Water Research X* DRL+EPANET contamination paper was also mentioned in results; irrelevant to equity.
 
 ## 3. Methods papers we rely on
 
@@ -60,5 +65,9 @@ Not allowed: "this is the first / unpublished". The search covered a handful of 
 | 2026-11-01 | Siddique Weng Zimmer fair policies ICML 2020 | Confirmed; arXiv 2008.07773 |
 | 2026-11-01 | Cai asymmetric actor-critic privileged information NeurIPS 2024 | Confirmed title/authors; arXiv 2412.00985 |
 | earlier (M1) | RL + intermittent supply + equity + valve scheduling | No match (titles/snippets only) |
+| 2026-11-01 | Hu deep RL valve scheduling water distribution contamination 2020 | Found Hu et al. 2020 (MBE) |
+| 2026-11-01 | MADDPG pump and valve scheduling Hu Gao Zhong 2023 | Found, Water Supply 23(7) |
+| 2026-11-01 | reinforcement learning intermittent water supply equity zone valve scheduling household storage | No direct match; surfaced the unverified "CORE" household-refill preprint |
+| 2026-11-01 | DRL-EPANET NeurIPS 2022 | Found workshop + JWRPM 2024 versions |
 
 TODO for a human: open each DOI/arXiv link, read the full text, then upgrade the flag to `VERIFIED-FULLTEXT` and add one concrete sentence (their metric, their network, their result).
