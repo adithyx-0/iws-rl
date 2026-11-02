@@ -35,3 +35,14 @@ Files added (all new, no existing file edited): `docs/related_work.md`, `docs/as
 - CORE preprint read at abstract-page level (engrXiv 7798): household pump thresholds, no RL/zone/equity. Not a threat to the novelty wording. `docs/related_work.md` updated.
 - Hubli-Dharwad tank-volume numbers: not obtained (eScholarship empty, NSF PAR refused). Leads: PMC4624240, Water Alternatives 2014 storage paper.
 - T3.6 spare PPO seeds 5-9: NOT started. This machine has 12 cores but no venv and no stable-baselines3/sb3-contrib; needs `python -m venv venv` + `pip install -r requirements.txt` (large torch download). Waiting for a decision.
+
+## 2026-11-02 - T3.6 spare PPO seeds 5-9 (v2 env, 300k steps): status
+**Setup (Windows):** Smart App Control blocked PyTorch DLLs (WinError 4551); user turned it off (irreversible without a Windows reset). venv created, `requirements.txt` installed plus `six` (wntr 1.5.0 imports it but does not declare it). `check_setup.py` passes.
+**Finished:** seeds 5, 6, 7, 9 -> `models_v2/ppo_s{5,6,7,9}.zip` (300k steps, `IWS_V2=1`, same command as seeds 0-4: `train_variant.py ppo SEED 300000`). Wall time 7,261-8,925 s each with 5 jobs in parallel on 12 cores. Smoke test only (all four load; scenario 10000 mean_sr 0.731-0.745): NOT an evaluation. Final numbers must come from M1's `eval_all.py`. The new .zip files are untracked on purpose.
+**Seed 8:** two failures, then a silent stop; third attempt (own folder, own TEMP) started 2026-11-02 18:39, not finished at time of writing.
+**Windows problems found (for M1, who owns `run_jobs.py`, `iws_env.py`, `train_variant.py`):**
+1. Five jobs started together from `run_jobs.py` in the repo folder: four crashed within 30 s with EPANET error 307 "cannot read hydraulics file". The explanation that they shared a working directory is NOT confirmed.
+2. Re-run in separate folders: seed 5 crashed at ~51 min and seed 8 at ~77 min with EPANET error 305 "cannot open hydraulics file", so separate folders do not prevent it. Cause unknown; a shared Windows TEMP folder (hundreds of `iws_*` files) is untested suspicion.
+3. A seed-8 retry with its own TEMP stopped without any error or output after ~3.5 h. Cause unknown.
+4. No checkpointing: every crash loses the whole run. Suggested fixes (M1's call): retry on EpanetException, periodic `model.save`, per-environment temp folders.
+**Method used for the successful runs:** detached hidden processes, `IWS_V2=1`, one working folder per seed under `D:\projects\iws-rl_runs\` (outside the repo). Seed 5 needed a second attempt.
