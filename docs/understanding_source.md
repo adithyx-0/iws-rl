@@ -1,4 +1,4 @@
-# IWS-RL: understanding the project (edition 2, night of 1 Nov 2026)
+# IWS-RL: understanding the project (edition 3, morning of 2 Nov 2026)
 
 Repo: https://github.com/adithyx-0/iws-rl  |  Plan for the next 30 hours: `docs/PLAN_v1.md`  |  Full history: `docs/PROJECT_LOG.md`
 
@@ -104,6 +104,22 @@ Gate 1 rule (>= 0.02 mean supply or >= 0.05 worst-zone headroom over the best no
 
 **Domain randomisation (C1).** Plain PPO beats the fixed schedule in the normal setting (+0.38 return) but loses that advantage when the surge factor changes (alpha=2: -0.13, alpha=8: -0.02). PPO trained with randomised surge factor, tank sizes and budgets (3 seeds) beats the fixed schedule in every shifted condition (alpha=2 +0.39, alpha=8 +0.28, small tanks +1.03), at a cost of 0.2-0.4 return in-distribution. LSTM policies were **worse** than plain PPO (default return -11.2 and -13.9 vs -9.7), probably under-trained at 300k steps. Caveats: 3 seeds; one under-tuned fixed schedule; confidence intervals cover test scenarios, not training seeds.
 
+### Final M1 results (2 Nov morning): tuned fixed schedule, ablations, fairness Pareto
+Source files: `results_v2/summary.csv`, `results_v2/paired_vs_ce_tuned.csv`, figures in `results_v2/figs/` (`pareto.png`, `regime_map.png`). Script: `analyze_final.py`. CIs are paired bootstraps over test scenarios only; training-seed variance is excluded. PPO has 5 seeds, ppo_dr/DQN/no-equity 3, tuned schedule 3 (CE 40 iterations, population 60), lambda sweep 2 per point.
+
+| Condition | PPO | PPO+DR | DQN | No-equity | Tuned schedule |
+|---|---|---|---|---|---|
+| default (return) | -9.67 | -9.88 | -10.04 | -10.00 | -9.15 |
+| alpha=2 (demand surge, shifted) | -9.67 | -9.14 | -8.31 | -10.09 | -10.81 |
+| small tanks (shifted) | -17.77 | -17.20 | -16.43 | -18.50 | -17.62 |
+| alpha=8 | -11.18 | -10.88 | -11.88 | -11.49 | -10.98 |
+
+- **The tuned fixed schedule beats plain PPO in the normal setting** (paired, significant), and in most conditions on both return and worst-zone supply. Our earlier "PPO beats the fixed schedule" was an artefact of an under-tuned baseline.
+- **RL significantly beats the tuned schedule where conditions shift**: alpha=2 (all RL methods, return and worst-zone), small tanks (DQN and PPO+DR on return), scarce (return, DQN/PPO/PPO+DR). A fixed schedule cannot react to these.
+- **Fairness weight lambda** (PPO, default): worst-zone 0.571 (lambda 0) to 0.635 (lambda 4) for a mean-supply cost of 0.010; node-level Gini does not improve. Removing the equity term lowers worst-zone supply (0.573 vs 0.601).
+- **Honest limits:** tuned schedule overfits its training scenarios somewhat (train -7.4, test -9.15); single network; assumed parameters; the lambda points have 2 seeds; the novelty claim is unverified (literature audit pending).
+- **Story:** RL is not better everywhere. It matters when the system differs from what a schedule was tuned for, and the equity weight gives a controllable fairness trade-off.
+
 ## 6. Open problems and the plan
 - Fairness Pareto curve (C2) not finished: lambda sweep running on the MacBook, the Vivobook has the main version.
 - No method contribution beyond environment + PPO -> C1 adaptive policy (domain randomisation + LSTM), C2 fairness Pareto front, C3 regime map (see `docs/PLAN_v1.md`).
@@ -121,3 +137,4 @@ Gate 1 rule (>= 0.02 mean supply or >= 0.05 worst-zone headroom over the best no
 |---|---|
 | 1 Nov 2026 | Edition 1: project history, sources, v1 and v2 results, plan v1 |
 | night of 1 Nov | Edition 2: oracle and Gate 1, domain-randomisation and LSTM results |
+- 2 Nov morning (edition 3): added tuned-schedule baseline, no-equity/DQN runs, lambda Pareto, paired CIs; main conclusion changed (see section 5, final M1 results).

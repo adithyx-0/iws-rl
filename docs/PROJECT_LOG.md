@@ -100,3 +100,6 @@ Findings (honest):
 4. DQN (not PPO) is best under alpha2/small_tanks in return; 3 seeds, untested significance. Do not claim PPO superiority.
 5. Caveat: ce_tuned train-vs-test gap (-7.4 train vs -9.15 test) shows overfitting to train scenarios 0-9; seed spread across 3 CE runs is large (CI -9.98..-8.35).
 Not yet done: paired CIs for these comparisons, regime map, pdf edition 3.
+
+## 2 Nov 07:00 - paired CIs vs tuned schedule (analyze_final.py)
+results_v2/paired_vs_ce_tuned.csv. Return: tuned schedule significantly better than ppo/ppo_dr/dqn/noequity in default, abundant, five_days, noisy, press10, press30; RL significantly better at alpha2 (all), scarce (dqn/ppo/ppo_dr), small_tanks (dqn, ppo_dr). Worst-zone: same pattern, plus ppo_dr better at small_tanks. Figures results_v2/figs/pareto.png, regime_map.png. understanding.pdf edition 3 built.
