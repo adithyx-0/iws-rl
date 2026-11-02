@@ -59,3 +59,6 @@ Files added (all new, no existing file edited): `docs/related_work.md`, `docs/as
 - HAZARD found and fixed for my files: `eval_all.py` loads every `models_v2/*.zip`, so extra PPO seeds there would silently change M1's "PPO (5 seeds)" row. My seeds 5, 6, 7, 9 were moved to `models_v2_extra/` (untracked). `models_v2/ppo_s8.zip` (not mine, unknown origin) is STILL in `models_v2/` and would be loaded as a sixth PPO seed on a rerun.
 - Seed robustness of the main claim (default condition): all 5 PPO runs are worse than all 3 tuned-schedule runs on worst-zone (best PPO 0.613 vs worst tuned 0.622) and on return (best PPO -9.52 vs worst tuned -9.29). PPO+DR is close to the tuned schedule (best DR return -9.33 vs worst tuned -9.29): do not call DR clearly worse on seed evidence.
 - M1's paired CIs bootstrap over test scenarios only (see `analyze_final.py` docstring); training-seed variance is not in them.
+
+## 2026-11-02 (19:25) - seed 8 run stopped
+- My third seed-8 attempt (`D:\projects\iws-rl_runs\s8_retry2`, started 18:39) was stopped by request at 19:25 to free CPU for the learning-curve runs. It produced no model, so the provenance of `models_v2/ppo_s8.zip` (unknown origin, mtime 11:43) was NOT established by the weight-comparison test. That file is still unverified and still sits in `models_v2/`.
