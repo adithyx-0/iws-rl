@@ -81,3 +81,22 @@ Source: results_v2/summary.csv, condition=default, 11 conditions x 15+ families 
 Reading: raising lam moves worst-zone supply 0.571 -> 0.635 (+0.064) for a mean-supply cost of 0.010. Monotone except lam=2 (0.598, below lam=1's 0.601; within seed noise, 2 seeds only). gini_node does NOT improve with lam (0.143 -> 0.159), so the equity term helps the worst ZONE, not node-level inequality. Not yet tested: CIs on the differences, lam>4. Caveat: 2 seeds per point.
 Also noted: lam0.5 models saved without .zip (dotted name) and were missed until renamed.
 Queued (fallback for absent Vivobook): noequity x3 + dqn x3 (models_v2), tuned CE (bo_schedule_tuned.py 40 60, seeds 0-2 -> results_v2/ce_tuned_s*.npy), then final eval_all (logs/eval_final_done.txt).
+
+## 2 Nov 06:40 - Fallback runs done + tuned CE baseline (IMPORTANT, changes the story)
+Done on M1 (no Vivobook): noequity x3, dqn x3 (300k), tuned CE x3 (40 iters, pop 60; train score -7.07/-7.40/-7.37), final eval 418 jobs / 22,800 episodes. Source: results_v2/summary.csv (CI = test scenarios only; training-seed variance excluded).
+Return (higher better), selected conditions:
+| cond | ppo(5) | ppo_dr(3) | dqn(3) | noequity(3) | ce_old(1) | ce_tuned(3) |
+|---|---|---|---|---|---|---|
+| default | -9.67 | -9.88 | -10.04 | -10.00 | -10.05 | -9.15 |
+| alpha2 | -9.67 | -9.14 | -8.31 | -10.09 | -9.54 | -10.81 |
+| alpha8 | -11.18 | -10.88 | -11.88 | -11.49 | -11.16 | -10.98 |
+| small_tanks | -17.77 | -17.20 | -16.43 | -18.50 | -18.23 | -17.62 |
+| scarce | -31.86 | -31.77 | -31.51 | -32.13 | -32.19 | -32.18 |
+Worst-zone supply, default: ppo 0.601, ppo_dr 0.609, ce_tuned 0.630.
+Findings (honest):
+1. The properly tuned fixed schedule BEATS plain PPO in-distribution (return -9.15 vs -9.67; worst-zone 0.630 vs 0.601) and in 8 of 11 conditions on return. The earlier "PPO beats the fixed schedule" was an artefact of the under-tuned baseline. Gate-1 conclusion (little headroom) stands.
+2. Where adaptivity wins: demand-surge shift alpha2 (dqn -8.31, ppo_dr -9.14 vs ce_tuned -10.81) and small_tanks (dqn -16.43, ppo_dr -17.20 vs -17.62). A fixed schedule cannot react to these; RL can. At alpha8 and elsewhere the schedule is as good or better.
+3. Equity term helps: noequity worst-zone 0.573 vs ppo 0.601 (default); return also worse (-10.00 vs -9.67). 3 vs 5 seeds, CIs not yet computed.
+4. DQN (not PPO) is best under alpha2/small_tanks in return; 3 seeds, untested significance. Do not claim PPO superiority.
+5. Caveat: ce_tuned train-vs-test gap (-7.4 train vs -9.15 test) shows overfitting to train scenarios 0-9; seed spread across 3 CE runs is large (CI -9.98..-8.35).
+Not yet done: paired CIs for these comparisons, regime map, pdf edition 3.
