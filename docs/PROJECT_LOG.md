@@ -1,5 +1,13 @@
 # IWS-RL project log
 
+## CURRENT STATE (updated 2 Nov 2026; the entries below are in time order, oldest first)
+- Environment: v2 (`IWS_V2=1`, demand x8, git tag `env-v2`). v1 was saturated and is superseded.
+- Main finding: a properly tuned fixed daily schedule beats plain PPO when conditions match its tuning; RL (DQN, domain-randomised PPO) beats it under demand surge, small tanks and scarce supply. The equity weight lambda trades 0.010 mean supply for +0.064 worst-zone supply (lambda 0 -> 4).
+- Not RL-better everywhere; one network; assumptions uncited; "first/novel" not claimable (literature audit: `docs/reference/iws-rl-literature-audit.md`).
+- Results: `results_v2/summary.csv`, `paired_vs_ce_tuned.csv`, `figs/`. Story and sources: `understanding.pdf`.
+- Citation correction (from the audit, full text read): Hendrickson & Sela conference version is Eng. Proc. 69(1):75; 69/1/184 is Kurian et al. 2024; 69/1/7 is unrelated. Earlier entries below that say 69/1/184 are wrong.
+- Open: slides, rehearsal, full-text reading of closest papers (Holgado-Sanchez 2024, Wanjiru 2016), assumption sources.
+
 ## 2026-11-01 - scarce-supply anomaly explained (not a bug)
 - Scarce condition (supply 0.3-0.5 of demand): all 10 PPO variants give identical mean_sr (0.4754) and min_zone_sr.
 - Cause: every PPO policy opens all zones (action 15) in ~3 hours per day, which spends the whole daily budget by ~12:00
@@ -11,7 +19,7 @@
 ## 2026-11-01 - literature check (web search, standard mode; titles/snippets only, full papers not read)
 - No RL paper found combining intermittent supply + zone valve scheduling + equity + household storage.
 - Closest prior art (non-RL): Hendrickson & Sela, Bayesian-optimisation flow-control valve schedules for local supply + global equity,
-  volume-driven demand with private tanks, 6 zones (MDPI Eng. Proc. 69/1/184); 2023 Water Supply MINLP minimising supply inequity;
+  volume-driven demand with private tanks, 6 zones (MDPI Eng. Proc. 69/1/75; originally logged here as 69/1/184, which the audit showed is wrong); 2023 Water Supply MINLP minimising supply inequity;
   Kurian et al. rural central India PDA inequity; Bengaluru/Delhi equity studies.
 - Closest RL (no equity, not IWS): Hu et al. 2020 DRL valve scheduling (contamination); Hu/Gao/Zhong 2023 MADDPG pump+valve; DRL-EPANET 2022; PPO pump scheduling 2023.
 - Positioning: RL for equity-aware zone scheduling under IWS with hidden household storage. Must compare to an open-loop optimised schedule (BO-style) baseline.

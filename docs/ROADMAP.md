@@ -1,4 +1,12 @@
-# Roadmap: what we plan to improve (agreed 2026-11-01, not started yet)
+# Roadmap: what we plan to improve (agreed 2026-11-01)
+
+**Status at 2 Nov (details in `PROJECT_LOG.md`):**
+- 1 Environment: DONE. v2 (demand_scale=8) makes pressure matter; scarce is still judged on worst-zone only.
+- 2 Methods: domain randomisation DONE (helps under shift); LSTM DONE (worse than plain PPO, probably under-trained, untested); fairness as a reward weight lambda DONE (Pareto sweep); a true Lagrangian constraint NOT done (our lambda is a reward penalty, do not call it constrained RL).
+- 3 Evidence: fixed schedule retuned DONE (40 iterations, population 60, 3 seeds; it is CE, not Bayesian optimisation); more seeds PARTLY (extra seeds queued, see log); A2C NOT fixed; learning curves NOT done; sensitivity sweeps PARTLY (alpha, tanks, pressure conditions in the evaluation); full-text reading of prior work IN PROGRESS (`docs/reference/iws-rl-literature-audit.md`).
+- 4 Report: assumptions still uncited (tank sizes, alpha, demand scale x8).
+
+(Original text below, unchanged.)
 
 The topic (equity-aware RL for intermittent water supply) is fixed. The results so far show real but modest gains and some weaknesses.
 These are the planned improvements, in priority order.

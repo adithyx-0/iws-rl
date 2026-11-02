@@ -17,24 +17,24 @@ In many cities (e.g. Indian cities) piped water arrives only a few hours per day
 ## 3. Where each idea came from
 | Idea / component | Source | Status |
 |---|---|---|
-| Topic: equity-aware RL for intermittent water supply (IWS) | Other Claude (Opus) produced `iws-rl.zip`; we chose it after eliminating 12 earlier candidates | Adopted, faculty approval to be confirmed (Adithyan) |
+| Topic: equity-aware RL for intermittent water supply (IWS) | Other Claude (Opus) produced `iws-rl.zip`; we chose it after eliminating 12 earlier candidates | Adopted; faculty approval stated as obtained by the user |
 | EPANET hydraulics, network Net3 | WNTR package (bundled example network), https://github.com/USEPA/WNTR | Tool |
 | PPO, DQN, A2C implementations | Stable-Baselines3, https://github.com/DLR-RM/stable-baselines3 | Tool |
 | Household roof tanks, daily budget, equity reward | Original `iws-rl.zip` design; values (tank 0.3-0.8 days, alpha=4) are **assumptions** | Needs cited ranges (Adithyan) |
-| Privileged greedy (reads hidden tank levels) | Added by us as an upper-ish reference | Not a true oracle (scores below PPO on v2) |
-| Optimised fixed daily schedule (CE search) | Added by us as the stand-in for Bayesian-optimisation schedules in the literature (Hendrickson & Sela) | Under-tuned; mislabelled as BO in code; being redone |
+| Privileged greedy (reads hidden tank levels) | Added by us as an upper-ish reference | Not a true oracle (scores below PPO on v2); the true clairvoyant oracle is `oracle.py` |
+| Optimised fixed daily schedule (CE search) | Added by us as the stand-in for Bayesian-optimisation schedules in the literature (Hendrickson & Sela) | Retuned (40 iterations, population 60, 3 seeds); it is CE search, not Bayesian optimisation |
 | Diagnosis: scarce supply is degenerate | Our own analysis (`scarce_diag.py`, `scarce_trace.py`) | Done |
 | Hydraulics never bind in v1; demand_scale=8 gives v2 | Our own probes (`hyd_probe.py`, `scale_study.py`); the 4-8x peak-flow argument is our reasoning, not a citation | Done |
 | Supply ceiling (mean supply can't exceed ~0.773 in v1) | External review `docs/reference/improvements_for_ref.md`; consistent with our scarce result 0.4754 vs ceiling 0.473 | Consistent; not independently re-derived by us |
-| Adaptive policy: domain randomisation + recurrent (LSTM) policy | Same review; resembles rapid-motor-adaptation ideas in robotics (from memory, **verify before citing**) | Planned (C1) |
-| Equity as constraint / Pareto front; generalised Gini | Same review; Siddique et al., ICML 2020 | Planned (C2) |
-| Clairvoyant oracle for regret | Our design: env is deterministic given a seed, so optimise the full action sequence per scenario | Planned (Gate 1) |
+| Adaptive policy: domain randomisation + recurrent (LSTM) policy | Same review; resembles rapid-motor-adaptation ideas in robotics (from memory, **verify before citing**) | Done (C1): domain randomisation helps under shift; LSTM did not |
+| Equity as a reward weight lambda; Pareto front over lambda | Same review; Siddique et al., ICML 2020 is related fair-RL work, but our method is a reward penalty, not constrained RL and not their welfare optimisation | Done (lambda sweep) |
+| Clairvoyant oracle for regret | Our design: env is deterministic given a seed, so optimise the full action sequence per scenario | Done (Gate 1) |
 
 ## 4. Related work found so far
-**Honesty note:** every item below was read as a title or abstract/snippet only (web search). None has been read in full yet; full reading is task T3.1. Do not quote them as fact before that.
+**Honesty note:** items were first found as titles or snippets. A later audit (`docs/reference/iws-rl-literature-audit.md`, 2 Nov, 23 queries, run by another AI session; check cited sources yourself before presenting) read in full: Hendrickson & Sela journal and conference versions, Kurian et al. 2024, Hajgato et al. 2020 and Gym4ReaL; abstract only: Kurian 2023, Siddique 2020, Holgado-Sanchez 2024, Wanjiru 2016; the rest snippet only. Read in full before relying on them: Holgado-Sanchez 2024 and Wanjiru 2016.
 
 ### Closest to our problem (non-RL, equity in intermittent supply)
-- Hendrickson & Sela, 2024: Bayesian optimisation of flow-control valve schedules for local supply and global equity, volume-driven demand with private tanks, 6 zones. https://doi.org/10.1016/j.scs.2024.105615 ; conference version https://www.mdpi.com/2673-4591/69/1/75  (our log earlier cited `69/1/184`, which may be wrong; to be checked)
+- Hendrickson & Sela, 2024: Bayesian optimisation of flow-control valve schedules for local supply and global equity, volume-driven demand with private tanks, 6 zones. https://doi.org/10.1016/j.scs.2024.105615 ; conference version https://doi.org/10.3390/engproc2024069075 (Eng. Proc. 69(1):75, with a third author; 69/1/184 is Kurian et al. 2024 and 69/1/7 is unrelated: verified by the audit, full text read)
 - 2023 Water Supply, MINLP minimising supply inequity under hydraulic constraints: https://doaj.org/article/37953cf59e474f7687beb590577f3458
 - Kurian et al. 2023, Water Supply, equitable supply in intermittently operated rural schemes: https://iwaponline.com/ws/article/23/11/4520/98117/Equitable-supply-in-intermittently-operated-rural
 - UCSB intermittent-supply scheduling thesis: https://escholarship.org/uc/item/3xb4j737
@@ -59,50 +59,9 @@ In many cities (e.g. Indian cities) piped water arrives only a few hours per day
 - Safe RL tooling: Safety-Gymnasium https://arxiv.org/pdf/2310.12567 ; OmniSafe https://github.com/PKU-Alignment/omnisafe
 - Intermittent supply background (Dehra Dun): https://sswm.info/node/1445
 
-### Is it new?
-Our searches (title/snippet level) found **no RL paper that combines intermittent supply, zone valve scheduling, equity and hidden household storage**. This is evidence of a gap, not proof. A proper audited novelty check is task T3.1. Also unconfirmed: a "Sept 2026 npj Clean Water equity paper" mentioned in an outside brief could not be found.
-
-## 5. Results so far
-### v1 environment (150k-500k steps, results in `results/`, summary `results/RESULTS_SUMMARY.md`)
-| Method | mean supply | worst zone |
-|---|---|---|
-| PPO 500k (5 seeds) | 0.767 | 0.737 |
-| PPO 150k (5 seeds) | 0.766 | 0.735 |
-| Privileged greedy | 0.766 | 0.736 |
-| PPO no equity / no forecast | 0.763 | 0.724 / 0.727 |
-| Optimised fixed schedule | 0.759 | 0.712 |
-| DQN | 0.753 | 0.691 |
-| Greedy k=1 | 0.737 | 0.658 |
-| Random | 0.701 | 0.618 |
-| A2C (untuned, failed) | 0.440 | 0.143 |
-
-What this means: v1 was **saturated**. Mean supply cannot exceed a ceiling of about 0.773 set by the daily water budget, and PPO reached 99% of it; the scarce-supply rows are an accounting identity (every model 0.4754 vs ceiling 0.473). Pressure thresholds of 10, 20, 30 m gave identical results because pressure stayed at 37-46 m (hydraulics never bound). PPO was also fragile: at surge factor alpha=2 it was worse than random.
-
-### v2 environment (demand_scale=8, tag `env-v2`, results in `results_v2/`)
-Hydraulic probe: at demand x8, opening all zones delivers only 54-73% of requested flow (pressure 13-18 m), one zone 90-99%.
-| Method (default condition) | mean supply | worst zone |
-|---|---|---|
-| PPO (5 seeds, 300k) | 0.716 | 0.601 |
-| Optimised fixed schedule (1 run) | 0.708 | 0.612 |
-| Random | 0.672 | 0.527 |
-| All open | 0.648 | 0.513 |
-| Greedy k=2 | 0.648 | 0.589 |
-| Privileged greedy | 0.639 | 0.494 |
-| Greedy k=1 | 0.604 | 0.591 |
-| Rota k=1 | 0.560 | 0.410 |
-
-What this means: the sanity check passes (methods spread from 0.56 to 0.72; pressure thresholds now matter: 10 m 0.703, 20 m 0.716, 30 m 0.724). PPO beats greedy k=1 by +0.112 (CI 0.103-0.120). **But PPO is only about 0.008 ahead of the fixed schedule on mean supply and is worse on the worst zone**, so there is no clear RL win yet. The gap to the ceiling is about 0.057, which is the headroom an oracle may or may not be able to use (Gate 1). PPO-no-equity, DQN and A2C have not yet been run on v2.
-
-### Oracle (Gate 1) and the effect of domain randomisation (night of 1 Nov)
-The **clairvoyant oracle** optimises the whole 72-step action sequence per test scenario with full knowledge of the future (hindsight upper bound, not a deployable policy). Its first version was invalid (it scored below PPO, so the search was too weak) and was replaced by a warm-started one.
-| Method (v2 default, 30 scenarios) | return (objective) | mean supply | worst zone |
-|---|---|---|---|
-| Oracle | -8.49 | 0.725 | 0.631 |
-| PPO | -9.48 | 0.719 | 0.601 |
-| Fixed schedule | -9.83 | 0.711 | 0.612 |
-Gate 1 rule (>= 0.02 mean supply or >= 0.05 worst-zone headroom over the best non-PPO baseline) **fails** (0.013 and 0.019), but on the objective the oracle is +0.99 return over PPO: PPO closes only ~26% of the gap between the fixed schedule and the oracle. Little headroom on mean supply, some on worst-zone fairness.
-
-**Domain randomisation (C1).** Plain PPO beats the fixed schedule in the normal setting (+0.38 return) but loses that advantage when the surge factor changes (alpha=2: -0.13, alpha=8: -0.02). PPO trained with randomised surge factor, tank sizes and budgets (3 seeds) beats the fixed schedule in every shifted condition (alpha=2 +0.39, alpha=8 +0.28, small tanks +1.03), at a cost of 0.2-0.4 return in-distribution. LSTM policies were **worse** than plain PPO (default return -11.2 and -13.9 vs -9.7), probably under-trained at 300k steps. Caveats: 3 seeds; one under-tuned fixed schedule; confidence intervals cover test scenarios, not training seeds.
+### Is it new? (audit result, 2 Nov)
+Answer: **unclear (confidence low-medium)**. No paper was found combining RL, intermittent-supply zone valve control, an equity term and household storage, but absence in 23 web queries is not proof, and the search could not use Scholar, IEEE, Scopus or ScienceDirect directly. Closest prior work: Hendrickson & Sela 2024 (open-loop Bayesian-optimised valve schedules for equity with tanks in WNTR; no RL; they test fixed schedules against +-50% tank-size changes but only versus no control), Kurian et al. 2023 (MINLP schedule for equity), Holgado-Sanchez et al. 2024 (constrained RL, equity, drought; abstract only), Wanjiru et al. 2016 (open-loop vs closed-loop MPC for household tanks; already states the qualitative regime result, so the idea is not new, only our RL evidence on this network). RL for water without equity or intermittent supply: Hu et al. 2023, Hajgato et al. 2020 (demand randomisation), Gym4ReaL 2025 (EPANET, binary pump actions). "Cai et al. 2024" and an "npj Clean Water" equity paper could not be found; do not cite them.
+Allowed wording: "To our knowledge, based on a targeted search, this is an exploratory study applying RL to equity-aware valve scheduling in intermittent supply; adaptive control helped under the shifts we tested, not in-distribution." Not allowed: "first/novel" without the qualifier, "RL beats optimised schedules" without "under the shifts we tested", "constrained/Lagrangian RL", "robust" in general, "statistically significant" without stating seeds and CIs, results transfer to real networks. Note also that our household tanks sit outside the EPANET hydraulics (a simplification relative to Hendrickson & Sela).
 
 ### Final M1 results (2 Nov morning): tuned fixed schedule, ablations, fairness Pareto
 Source files: `results_v2/summary.csv`, `results_v2/paired_vs_ce_tuned.csv`, figures in `results_v2/figs/` (`pareto.png`, `regime_map.png`). Script: `analyze_final.py`. CIs are paired bootstraps over test scenarios only; training-seed variance is excluded. PPO has 5 seeds, ppo_dr/DQN/no-equity 3, tuned schedule 3 (CE 40 iterations, population 60), lambda sweep 2 per point.

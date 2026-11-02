@@ -1,5 +1,7 @@
 # PLAN v1 - three laptops, finish and present by end of day Mon 2 Nov 2026
 
+> **Status at 2 Nov (what actually happened):** the Vivobook (M2) work was not delivered, so M1 ran it on the MacBook: no-equity x3, DQN x3, tuned CE baseline x3, fairness sweep (`models_v2/`, `results_v2/`). M1 evaluation, paired CIs, figures and `understanding.pdf` are done. M3 (Adithyan) pushed a branch `feature/adithyan-m3` with related-work, assumptions, plots and a slide outline; it is NOT merged because its cross-check and plots are v1-based and must be regenerated from `results_v2/`. Faculty approval of the topic: stated as obtained by the user. Open: slides, full-text literature check, rehearsal. Original plan text below, unchanged.
+
 > Naming: **PLAN v1, v2, v3...** are sprints of the whole team (this file = sprint 1). `env-v2` is the *environment* git tag (demand_scale=8) and stays as is.
 > Start: Sun 1 Nov ~18:00 IST. Deadline: Mon 2 Nov 23:59 IST (present-ready). Overnight = machines run, people sleep.
 
