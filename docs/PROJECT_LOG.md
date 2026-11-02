@@ -1,5 +1,13 @@
 # IWS-RL project log
 
+## CURRENT STATE (updated 2 Nov 2026; the entries below are in time order, oldest first)
+- Environment: v2 (`IWS_V2=1`, demand x8, git tag `env-v2`). v1 was saturated and is superseded.
+- Main finding: a properly tuned fixed daily schedule beats plain PPO when conditions match its tuning; RL (DQN, domain-randomised PPO) beats it under demand surge, small tanks and scarce supply. The equity weight lambda trades 0.010 mean supply for +0.064 worst-zone supply (lambda 0 -> 4).
+- Not RL-better everywhere; one network; assumptions uncited; "first/novel" not claimable (literature audit: `docs/reference/iws-rl-literature-audit.md`).
+- Results: `results_v2/summary.csv`, `paired_vs_ce_tuned.csv`, `figs/`. Story and sources: `understanding.pdf`.
+- Citation correction (from the audit, full text read): Hendrickson & Sela conference version is Eng. Proc. 69(1):75; 69/1/184 is Kurian et al. 2024; 69/1/7 is unrelated. Earlier entries below that say 69/1/184 are wrong.
+- Open: slides, rehearsal, full-text reading of closest papers (Holgado-Sanchez 2024, Wanjiru 2016), assumption sources.
+
 ## 2026-11-01 - scarce-supply anomaly explained (not a bug)
 - Scarce condition (supply 0.3-0.5 of demand): all 10 PPO variants give identical mean_sr (0.4754) and min_zone_sr.
 - Cause: every PPO policy opens all zones (action 15) in ~3 hours per day, which spends the whole daily budget by ~12:00
@@ -11,7 +19,7 @@
 ## 2026-11-01 - literature check (web search, standard mode; titles/snippets only, full papers not read)
 - No RL paper found combining intermittent supply + zone valve scheduling + equity + household storage.
 - Closest prior art (non-RL): Hendrickson & Sela, Bayesian-optimisation flow-control valve schedules for local supply + global equity,
-  volume-driven demand with private tanks, 6 zones (MDPI Eng. Proc. 69/1/184); 2023 Water Supply MINLP minimising supply inequity;
+  volume-driven demand with private tanks, 6 zones (MDPI Eng. Proc. 69/1/75; originally logged here as 69/1/184, which the audit showed is wrong); 2023 Water Supply MINLP minimising supply inequity;
   Kurian et al. rural central India PDA inequity; Bengaluru/Delhi equity studies.
 - Closest RL (no equity, not IWS): Hu et al. 2020 DRL valve scheduling (contamination); Hu/Gao/Zhong 2023 MADDPG pump+valve; DRL-EPANET 2022; PPO pump scheduling 2023.
 - Positioning: RL for equity-aware zone scheduling under IWS with hidden household storage. Must compare to an open-loop optimised schedule (BO-style) baseline.
@@ -53,3 +61,58 @@ Not yet run on v2: PPO-noequity, DQN (queued in jobs_v2_laptopC.txt), A2C. Env f
 - Decision: C2 (fairness Pareto) + C3 (regime map, oracle regret) are the core; C1 (LSTM + domain randomisation) is run overnight and reported as a result either way.
 - Added to env (default off): `randomize` (train ranges alpha U[3,6], tank_days lo U[.2,.4]/hi U[.6,1.0], supply lo U[.4,.6]/hi U[.8,1.0]; held-out test = alpha 2 and 8, scarce supply 0.3-0.5, small/large tanks), metrics `jain_zone`, `ceiling`.
 - Overnight (jobs_M1_v1.txt, 9 runs, 300k steps, IWS_V2=1): rec x3, rec_dr x3, ppo_dr x3 -> models_v2/.
+
+## 2026-11-01 (night) - C1 results: LSTM and domain randomisation (v2, 21 methods x 11 conditions, 12,600 episodes; results_v2/, previous round in results_v2/round1)
+Paired return differences (mean [95% CI over 100/50 test scenarios; training-seed variance NOT included], higher is better):
+| condition | ppo_dr - ppo | ppo_dr - CE schedule | ppo - CE schedule |
+|---|---|---|---|
+| default | -0.20 [-0.27,-0.15] | +0.17 [+0.10,+0.24] | +0.38 [+0.30,+0.44] |
+| alpha=2 (held out) | +0.53 [+0.35,+0.71] | +0.39 [+0.12,+0.68] | -0.13 [-0.47,+0.23] |
+| alpha=8 (held out) | +0.30 [+0.23,+0.36] | +0.28 [+0.16,+0.39] | -0.02 [-0.10,+0.06] |
+| small tanks | +0.56 [+0.48,+0.64] | +1.03 [+0.89,+1.18] | +0.47 [+0.32,+0.62] |
+| large tanks | -0.44 [-0.57,-0.33] | +0.42 [+0.28,+0.55] | +0.86 [+0.70,+1.03] |
+| 5 days | -0.35 [-0.44,-0.25] | +0.05 [-0.08,+0.19] | +0.39 [+0.26,+0.54] |
+- Plain PPO beats the CE schedule in-distribution but LOSES that advantage when alpha shifts (alpha=2: -0.13, alpha=8: -0.02). PPO with domain randomisation (ppo_dr, 3 seeds) beats the CE schedule in every shifted condition, at a cost of 0.2-0.4 return in-distribution. This supports C1 in its simple form (randomised training), not the LSTM.
+- LSTM (rec) is worse than PPO everywhere (default return -11.2 vs -9.7); LSTM + DR (rec_dr) is worst (-13.9, worst-zone 0.469). Likely under-trained at 300k steps (not tested); report as negative result, do not claim LSTMs cannot help.
+- Caveats: ppo_dr/rec 3 seeds; the CE schedule baseline is a single, under-tuned run (M2 is redoing it), so "beats CE" is optimistic until then; CIs exclude seed variance.
+- Started on M1 as insurance for C2: lam sweep 0, 0.5, 2, 4 x 2 seeds (jobs_M1_pareto.txt -> models_v2/ppo_lamX_sN.zip; lam=1 is ppo). The Vivobook's own sweep goes to models_fair/.
+
+## 2 Nov 00:40 - C2 Pareto (lam sweep), M1 insurance runs
+Source: results_v2/summary.csv, condition=default, 11 conditions x 15+ families (17,400 episodes). lam=1 is `ppo` (5 seeds); others 2 seeds each.
+| lam | mean_sr | min_zone_sr | gini_node | return |
+|---|---|---|---|---|
+| 0 | 0.717 | 0.571 | 0.143 | -10.09 |
+| 0.5 | 0.716 | 0.586 | 0.150 | -9.93 |
+| 1 (ppo) | 0.716 | 0.601 | 0.148 | -9.67 |
+| 2 | 0.712 | 0.598 | 0.152 | -10.21 |
+| 4 | 0.707 | 0.635 | 0.159 | -9.79 |
+Reading: raising lam moves worst-zone supply 0.571 -> 0.635 (+0.064) for a mean-supply cost of 0.010. Monotone except lam=2 (0.598, below lam=1's 0.601; within seed noise, 2 seeds only). gini_node does NOT improve with lam (0.143 -> 0.159), so the equity term helps the worst ZONE, not node-level inequality. Not yet tested: CIs on the differences, lam>4. Caveat: 2 seeds per point.
+Also noted: lam0.5 models saved without .zip (dotted name) and were missed until renamed.
+Queued (fallback for absent Vivobook): noequity x3 + dqn x3 (models_v2), tuned CE (bo_schedule_tuned.py 40 60, seeds 0-2 -> results_v2/ce_tuned_s*.npy), then final eval_all (logs/eval_final_done.txt).
+
+## 2 Nov 06:40 - Fallback runs done + tuned CE baseline (IMPORTANT, changes the story)
+Done on M1 (no Vivobook): noequity x3, dqn x3 (300k), tuned CE x3 (40 iters, pop 60; train score -7.07/-7.40/-7.37), final eval 418 jobs / 22,800 episodes. Source: results_v2/summary.csv (CI = test scenarios only; training-seed variance excluded).
+Return (higher better), selected conditions:
+| cond | ppo(5) | ppo_dr(3) | dqn(3) | noequity(3) | ce_old(1) | ce_tuned(3) |
+|---|---|---|---|---|---|---|
+| default | -9.67 | -9.88 | -10.04 | -10.00 | -10.05 | -9.15 |
+| alpha2 | -9.67 | -9.14 | -8.31 | -10.09 | -9.54 | -10.81 |
+| alpha8 | -11.18 | -10.88 | -11.88 | -11.49 | -11.16 | -10.98 |
+| small_tanks | -17.77 | -17.20 | -16.43 | -18.50 | -18.23 | -17.62 |
+| scarce | -31.86 | -31.77 | -31.51 | -32.13 | -32.19 | -32.18 |
+Worst-zone supply, default: ppo 0.601, ppo_dr 0.609, ce_tuned 0.630.
+Findings (honest):
+1. The properly tuned fixed schedule BEATS plain PPO in-distribution (return -9.15 vs -9.67; worst-zone 0.630 vs 0.601) and in 8 of 11 conditions on return. The earlier "PPO beats the fixed schedule" was an artefact of the under-tuned baseline. Gate-1 conclusion (little headroom) stands.
+2. Where adaptivity wins: demand-surge shift alpha2 (dqn -8.31, ppo_dr -9.14 vs ce_tuned -10.81) and small_tanks (dqn -16.43, ppo_dr -17.20 vs -17.62). A fixed schedule cannot react to these; RL can. At alpha8 and elsewhere the schedule is as good or better.
+3. Equity term helps: noequity worst-zone 0.573 vs ppo 0.601 (default); return also worse (-10.00 vs -9.67). 3 vs 5 seeds, CIs not yet computed.
+4. DQN (not PPO) is best under alpha2/small_tanks in return; 3 seeds, untested significance. Do not claim PPO superiority.
+5. Caveat: ce_tuned train-vs-test gap (-7.4 train vs -9.15 test) shows overfitting to train scenarios 0-9; seed spread across 3 CE runs is large (CI -9.98..-8.35).
+Not yet done: paired CIs for these comparisons, regime map, pdf edition 3.
+
+## 2 Nov 07:00 - paired CIs vs tuned schedule (analyze_final.py)
+results_v2/paired_vs_ce_tuned.csv. Return: tuned schedule significantly better than ppo/ppo_dr/dqn/noequity in default, abundant, five_days, noisy, press10, press30; RL significantly better at alpha2 (all), scarce (dqn/ppo/ppo_dr), small_tanks (dqn, ppo_dr). Worst-zone: same pattern, plus ppo_dr better at small_tanks. Figures results_v2/figs/pareto.png, regime_map.png. understanding.pdf edition 3 built.
+
+## 2 Nov 14:45 - seed top-up finished (jobs_M1_seeds.txt; 506 eval jobs, 27,600 episodes)
+PPO+DR, DQN, no-equity now 5 seeds each; lambda 0 and 4 now 3 seeds; lambda 0.5 and 2 stay at 2; tuned schedule 3. Previous summary kept as results_v2/pre_seeds_summary.csv.
+Default return / mean_sr / worst-zone: ppo -9.67/0.716/0.601; ppo_dr -9.92/0.711/0.612; dqn -10.02/0.714/0.590; no-equity -10.14/0.718/0.564; ce_tuned -9.15/0.716/0.630. Lambda 0/0.5/1/2/4 worst-zone 0.573/0.586/0.601/0.598/0.635.
+What changed: small_tanks, PPO+DR vs tuned schedule moved from "better" to "tie" (DQN still better); alpha2 DQN -8.80 (was -8.31), all RL still significantly better; scarce no-equity now significantly worse on return. All other conclusions unchanged: tuned schedule wins in-distribution; RL wins under alpha2, DQN under small tanks, return under scarce.

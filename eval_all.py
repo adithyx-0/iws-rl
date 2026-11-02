@@ -40,7 +40,15 @@ def ce_schedule(env, obs):
     return int(sum(int(b) << z for z, b in enumerate(S[h])))
 
 
+def make_ce_tuned(sd):
+    def f(env, obs):
+        S = np.load(f"{RES}/ce_tuned_s{sd}.npy"); h = env.t % 24
+        return int(sum(int(b) << z for z, b in enumerate(S[h])))
+    return f
+
+
 def baseline_policy(name):
+    if name.startswith("ce_tuned_s"): return make_ce_tuned(int(name[-1]))
     return {"random": random_policy, "all_open": all_open, "rota_k1": make_rota(1), "greedy_k1": make_greedy(1),
             "greedy_k2": make_greedy(2), "priv_greedy_k1": priv_greedy, "ce_schedule": ce_schedule}[name]
 
@@ -88,6 +96,7 @@ def run_job(job):
 
 def methods():
     m = [(b, None) for b in ["random", "all_open", "rota_k1", "greedy_k1", "greedy_k2", "priv_greedy_k1", "ce_schedule"]]
+    m += [(f"ce_tuned_s{i}", None) for i in range(3) if os.path.exists(f"{RES}/ce_tuned_s{i}.npy")]
     if not BASE: m.append(("ppo_s0", "ppo_iws_s0.zip"))                      # shipped model
     for p in sorted(glob.glob(f"{MODELS}/*.zip")):
         m.append((os.path.basename(p)[:-4], p))

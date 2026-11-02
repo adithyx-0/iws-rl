@@ -1,0 +1,9 @@
+# M1 extra seeds (2 Nov, after first final eval) to firm up the 3-seed and 2-seed rows. IWS_V2=1. Writes models_v2/ only.
+train_variant.py dqn 3 300000
+train_variant.py dqn 4 300000
+train_variant.py ppo_dr 3 300000
+train_variant.py ppo_dr 4 300000
+train_variant.py ppo_noequity 3 300000
+train_variant.py ppo_noequity 4 300000
+train_variant.py ppo_lam0 2 300000
+train_variant.py ppo_lam4 2 300000
