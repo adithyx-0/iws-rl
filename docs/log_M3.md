@@ -52,3 +52,10 @@ Files added (all new, no existing file edited): `docs/related_work.md`, `docs/as
 - `presentation/outline.md` rewritten: the old story (PPO about equal to the CE schedule) was based on the early 1-seed CE schedule. With the tuned schedule: PPO ties on mean supply, loses on worst zone (-0.030) and return (-0.52, M1's paired CIs); RL wins only at alpha=2 (all three RL methods) and DQN at small tanks. Slide 10 (learning curves): NO DATA in repo. Oracle row uses 30 scenarios vs 100 for the rest: flagged on the slide.
 - `docs/assumptions.md`: stale statements about the CE schedule and the greedy_k1 comparison corrected.
 - Not checked: M1's `results_v2/figs/` (M1's own figures) were not compared with mine; table values match M1's README.
+
+## 2026-11-02 (evening) - audit
+- Git: branch in sync with `origin/feature/adithyan-m3`; contains all of `origin/main`; no unpushed commits at audit time. Untracked on purpose: model zips, `presentation/deck/`; `plots/train_curves.py` committed after this audit.
+- Every number in `presentation/outline.md` re-derived from `results_v2/summary.csv`, `paired_vs_ce_tuned.csv`, `oracle.csv`: all match. `make_plots.py` rebuilt from scratch gives an identical `results_table.csv`.
+- HAZARD found and fixed for my files: `eval_all.py` loads every `models_v2/*.zip`, so extra PPO seeds there would silently change M1's "PPO (5 seeds)" row. My seeds 5, 6, 7, 9 were moved to `models_v2_extra/` (untracked). `models_v2/ppo_s8.zip` (not mine, unknown origin) is STILL in `models_v2/` and would be loaded as a sixth PPO seed on a rerun.
+- Seed robustness of the main claim (default condition): all 5 PPO runs are worse than all 3 tuned-schedule runs on worst-zone (best PPO 0.613 vs worst tuned 0.622) and on return (best PPO -9.52 vs worst tuned -9.29). PPO+DR is close to the tuned schedule (best DR return -9.33 vs worst tuned -9.29): do not call DR clearly worse on seed evidence.
+- M1's paired CIs bootstrap over test scenarios only (see `analyze_final.py` docstring); training-seed variance is not in them.
