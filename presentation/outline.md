@@ -14,7 +14,7 @@ Figures: `plots/out/` (made by `python plots/make_plots.py --baseline ce_tuned -
 ## 2. Related work and the gap
 - Optimised schedules exist (Hendrickson & Sela: Bayesian optimisation of valve schedules; Kurian et al.: MINLP): open-loop optimisation.
 - RL for valves/pumps exists (Hu 2020 contamination; Hu 2023 MADDPG; DRL-EPANET), none that we found handles intermittent supply + equity.
-- Wording: "In our search we did not find..." never "first". Papers are checked at abstract level only (`docs/verify/`, `docs/VERIFY_PAPERS.md`); two names from the brief could not be found.
+- Wording: "In our search we did not find..." never "first". Papers are mostly checked at abstract level (`docs/verify/`). A 2026 *npj Clean Water* paper on equitable intermittent supply exists per the Part B results but has NOT been read: read it before presenting any novelty claim. The forward-citation search was not done.
 - Source: `docs/related_work.md`.
 
 ## 3. Our environment and assumptions
