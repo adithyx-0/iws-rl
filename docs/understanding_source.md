@@ -1,4 +1,4 @@
-# IWS-RL: understanding the project (edition 3, morning of 2 Nov 2026)
+# IWS-RL: understanding the project (edition 4, afternoon of 2 Nov 2026)
 
 Repo: https://github.com/adithyx-0/iws-rl  |  Plan for the next 30 hours: `docs/PLAN_v1.md`  |  Full history: `docs/PROJECT_LOG.md`
 
@@ -71,7 +71,7 @@ Source files: `results_v2/summary.csv`, `results_v2/paired_vs_ce_tuned.csv`, fig
 | default (return) | -9.67 | -9.92 | -10.02 | -10.14 | -9.15 |
 | alpha=2 (demand surge, shifted) | -9.67 | -9.15 | -8.80 | -9.66 | -10.81 |
 | small tanks (shifted) | -17.77 | -17.57 | -16.48 | -18.55 | -17.62 |
-| alpha=8 | see `summary.csv` | | | | -10.98 |
+| alpha=8 | -11.18 | -10.90 | -11.79 | -11.62 | -10.98 |
 
 - **The tuned fixed schedule beats plain PPO in the normal setting** (paired, significant), and in most conditions on both return and worst-zone supply. Our earlier "PPO beats the fixed schedule" was an artefact of an under-tuned baseline.
 - **RL significantly beats the tuned schedule where conditions shift**: alpha=2 (all RL methods, return and worst-zone), small tanks (DQN on return; PPO+DR ties), scarce (return, DQN/PPO/PPO+DR). A fixed schedule cannot react to these.
@@ -97,3 +97,4 @@ Source files: `results_v2/summary.csv`, `results_v2/paired_vs_ce_tuned.csv`, fig
 | 1 Nov 2026 | Edition 1: project history, sources, v1 and v2 results, plan v1 |
 | night of 1 Nov | Edition 2: oracle and Gate 1, domain-randomisation and LSTM results |
 - 2 Nov morning (edition 3): added tuned-schedule baseline, no-equity/DQN runs, lambda Pareto, paired CIs; main conclusion changed (see section 5, final M1 results).
+- 2 Nov afternoon (edition 4): seed top-up (5 seeds for PPO+DR, DQN, no-equity), literature audit folded in (citation fixes, novelty wording), paper verification plan `docs/VERIFY_PAPERS.md`.
