@@ -71,7 +71,9 @@ Figures: `plots/out/` (made by `python plots/make_plots.py --baseline ce_tuned -
 - Scarce supply: degenerate for mean supply (judge worst zone only); not used for claims here.
 
 ## 10. Learning curves / sample efficiency
-- NO DATA: no learning-curve files exist in the repo. Cut this slide, or train/log one PPO run with periodic evaluation (needs M1 or M2).
+- Data: `plots/train_curves.py`, PPO seeds 0-2, 300k steps, evaluated every ~20k steps on test seeds 10000-10009 (10 scenarios per point). Figure `plots/out/learning_curves.png`.
+- Mean supply flattens near 0.70-0.72 after ~100k steps (tuned schedule 0.716). Worst zone ends 0.60-0.62 at 300k (schedule 0.630) and is still rising slowly: do NOT claim convergence on the worst zone.
+- Caveat: 3 seeds, one training length, 10 scenarios per point, so single points are noisy. In the deck as slide 10.
 
 ## 11. Where RL does not help + limitations
 - Heatmaps `heatmap_mean_vs_baseline.png`, `heatmap_worst_vs_baseline.png` (paired means; blue = better than the tuned schedule). On worst zone, almost every RL row is red outside alpha=2; lambda=4 is the only RL row that is non-negative in most conditions.

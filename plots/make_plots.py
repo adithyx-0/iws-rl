@@ -157,16 +157,29 @@ else:
     print(f"[skip] heatmaps: {episodes_path} not found")
 
 # 5. learning curves, if provided
+tuned_ref = {}
+try:
+    _r = S[(S.family == a.baseline) & (S.condition == 'default')].iloc[0]
+    tuned_ref = {'mean_sr': float(_r['mean_sr']), 'min_zone_sr': float(_r['min_zone_sr'])}
+except Exception as e: print('[note] no tuned reference line:', e)
 if a.curves:
     files = sorted(glob.glob(a.curves))
     if files:
-        fig, ax = plt.subplots(figsize=(6.5, 4.2)); ok = 0
+        cs = []
         for f in files:
             c = pd.read_csv(f)
-            if {"step", "mean_sr"} <= set(c.columns): ax.plot(c.step, c.mean_sr, alpha=.7, label=os.path.basename(f)); ok += 1
+            if {"step", "mean_sr"} <= set(c.columns): cs.append((os.path.basename(f), c))
             else: print(f"[skip] curve {f}: needs columns step, mean_sr")
-        if ok: ax.set_xlabel("Training steps"); ax.set_ylabel("Mean supply ratio (eval)"); ax.legend(fontsize=6); ax.grid(alpha=.3); save(fig, "learning_curves.png")
-        else: plt.close(fig)
+        if cs:
+            has_w = all("min_zone_sr" in c.columns for _, c in cs)
+            fig, axs = plt.subplots(1, 2 if has_w else 1, figsize=(10, 4.2), squeeze=False); axs = axs[0]
+            cols = ["mean_sr", "min_zone_sr"][:len(axs)]; labs = ["Mean supply ratio", "Worst-zone supply ratio"]
+            for ax, col, ylab in zip(axs, cols, labs):
+                for i, (n, c) in enumerate(cs): ax.plot(c.step, c[col], alpha=.8, label=f"PPO seed {i}")
+                ref = tuned_ref.get(col)
+                if ref is not None: ax.axhline(ref, color="#B85A0B", ls="--", lw=1.5, label=f"{a.baseline} (default test)")
+                ax.set_xlabel("Training steps"); ax.set_ylabel(ylab + " (test seeds 10000-10009)"); ax.grid(alpha=.3); ax.legend(fontsize=8)
+            fig.tight_layout(); save(fig, "learning_curves.png")
     else:
         print(f"[skip] curves: no files match {a.curves}")
 

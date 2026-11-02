@@ -62,3 +62,8 @@ Files added (all new, no existing file edited): `docs/related_work.md`, `docs/as
 
 ## 2026-11-02 (19:25) - seed 8 run stopped
 - My third seed-8 attempt (`D:\projects\iws-rl_runs\s8_retry2`, started 18:39) was stopped by request at 19:25 to free CPU for the learning-curve runs. It produced no model, so the provenance of `models_v2/ppo_s8.zip` (unknown origin, mtime 11:43) was NOT established by the weight-comparison test. That file is still unverified and still sits in `models_v2/`.
+
+## 2026-11-02 22:40 - learning curves finished
+- `train_curves.py` seeds 0, 1, 2 finished 300k steps (no crashes, private TEMP folders). Final eval (10 test scenarios): mean supply 0.705 / 0.715 / 0.712, worst zone 0.615 / 0.604 / 0.595.
+- `make_plots.py --curves` now draws two panels (mean supply, worst zone) with the tuned-schedule level as a dashed line. Added as slide 10 of the deck (17 slides: 14 main + 3 backup). Other plots/tables unchanged.
+- Claim kept narrow: mean supply plateaus by ~100k; worst zone still slowly rising, convergence not claimed.

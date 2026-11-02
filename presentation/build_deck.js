@@ -270,6 +270,24 @@ pres.addSection({ title: "Results" });
   s.addNotes("λ is the knob that trades efficiency for fairness. Do not call it Lagrangian or constrained RL. Our bonus is a max-min-style term and is NOT the generalized-Gini optimisation of Siddique et al.; say so if asked.");
 }
 
+// --- 8b Learning curves
+{
+  const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Results" });
+  title(s, "PPO matches the schedule on mean supply by 100k steps, but the worst zone is still rising");
+  const w = 7.7, h = w / 2.381;
+  s.addImage({ path: IMG("learning_curves.png"), x: M, y: 2.0, w, h, altText: "Learning curves for three PPO seeds: mean supply and worst-zone supply versus training steps, with the tuned schedule as a dashed line" });
+  const x = M + w + 0.4, tw = W - M - x;
+  s.addText([
+    { text: "Mean supply flattens near 0.70 to 0.72 after about 100k steps, at the tuned schedule's level (0.716).", options: { bullet: true, breakLine: true } },
+    { text: "Worst zone ends at 0.60 to 0.62 after 300k steps, still below the schedule's 0.630 and still creeping up.", options: { bullet: true, breakLine: true } },
+    { text: "We do not claim convergence on the worst zone.", options: { bullet: true } },
+  ], { objectName: "Curve findings", isTextBox: true, x, y: 2.0, w: tw, h: 3.0, fontSize: 17, color: C.text2, margin: 0, valign: "top", paraSpaceAfter: 10 });
+  card(s, "Curve caveat card", x, 5.1, tw, 1.55, C.background1);
+  s.addText("3 seeds, one training length (300k steps). Each point is 10 test scenarios, so single points are noisy.", { objectName: "Curve caveat", isTextBox: true, x: x + 0.2, y: 5.2, w: tw - 0.4, h: 1.35, fontSize: 14, italic: true, color: C.text2, margin: 0, valign: "middle" });
+  foot(s, "Source: plots/train_curves.py runs, seeds 0 to 2, test seeds 10000 to 10009; figure plots/out/learning_curves.png");
+  s.addNotes("Sample-efficiency evidence. Mean supply is level with the tuned schedule from about 100k steps; the worst zone is slower and is still rising at 300k, so more training or a larger lambda might close the gap, but we did not test that. Curves use 10 test scenarios per point and 3 seeds, so they are indicative only. The final-point values differ slightly from the 100-scenario table (PPO worst zone 0.601).");
+}
+
 // --- 9 Shift
 {
   const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Results" });
