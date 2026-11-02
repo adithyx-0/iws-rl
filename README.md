@@ -1,7 +1,7 @@
 # IWS-RL: equity-aware RL for intermittent water supply
 
 **Project status (2026-11-02):** experiments are finished on the harder v2 environment (`IWS_V2=1`, demand x8). Headline: a tuned fixed daily schedule is hard to beat when conditions match what it was tuned for; RL (DQN, domain-randomised PPO) beats it when conditions shift (demand surge, small tanks, scarce supply); the equity weight gives a controllable fairness trade-off. Details: `understanding.pdf` and the "Results v2" table below. The v1 results further down are kept for the record but are superseded (v1 was saturated).
-Remaining: slides and rehearsal, the full-text literature check (`docs/reference/iws-rl-literature-audit.md`), final seed top-up (see `docs/PROJECT_LOG.md`, last entries).
+Remaining: slides and rehearsal, and the full-text literature check (`docs/VERIFY_PAPERS.md`, background in `docs/reference/iws-rl-literature-audit.md`).
 
 ## START HERE (for teammates)
 1. **What is this?** A city water network gives each of 4 zones water only some hours per day. An RL agent decides every hour which zones get water. Households have roof tanks we cannot see. Goal: serve as much demand as possible *and* keep the worst-off zone from being starved (equity).
@@ -20,20 +20,20 @@ python train_variant.py ppo 0 150000     # train one model (~10 min) -> models/p
 5. **Result files:** `results/summary.csv` (per method and condition, with 95% confidence intervals), `results/paired_vs_greedy.csv` (differences vs the best simple baseline), `results/episodes.csv` (every episode), `results/v1/` (first round, before the extra baselines).
 
 ## Results v2 (the results to present; default test set; higher is better)
-Source: `results_v2/summary.csv`; paired CIs in `results_v2/paired_vs_ce_tuned.csv`; figures in `results_v2/figs/`. Seeds: PPO 5, PPO+DR 3, DQN 3, no-equity 3, tuned schedule 3 (CE 40 iterations, population 60), lambda sweep 2 per point (extra seeds being added, see log).
+Source: `results_v2/summary.csv`; paired CIs in `results_v2/paired_vs_ce_tuned.csv`; figures in `results_v2/figs/`. Seeds: PPO 5, PPO+DR 5, DQN 5, no-equity 5, tuned schedule 3 (CE 40 iterations, population 60), lambda sweep 2-3 per point (506 evaluation jobs, 27,600 episodes).
 | Method | return | mean_sr | worst-zone sr |
 |---|---|---|---|
 | Clairvoyant oracle (30 scenarios, not deployable) | -8.49 | 0.725 | 0.631 |
 | Tuned fixed daily schedule (`ce_tuned`) | -9.15 | 0.716 | 0.630 |
 | PPO | -9.67 | 0.716 | 0.601 |
-| PPO + domain randomisation | -9.88 | 0.712 | 0.609 |
-| No-equity PPO | -10.00 | 0.718 | 0.573 |
-| DQN | -10.04 | 0.713 | 0.593 |
+| PPO + domain randomisation | -9.92 | 0.711 | 0.612 |
+| No-equity PPO | -10.14 | 0.718 | 0.564 |
+| DQN | -10.02 | 0.714 | 0.590 |
 | Old (under-tuned) fixed schedule | -10.05 | 0.708 | 0.612 |
 | LSTM PPO (`rec`) | -11.24 | 0.702 | 0.573 |
 | Random | -14.33 | 0.672 | 0.527 |
-Under shift (return): alpha=2 DQN -8.31, PPO+DR -9.14 vs tuned schedule -10.81; small tanks DQN -16.43, PPO+DR -17.20 vs -17.62. The tuned schedule is significantly better than RL in most other conditions.
-Fairness sweep (PPO, lambda 0 / 0.5 / 1 / 2 / 4): worst-zone 0.571 / 0.586 / 0.601 / 0.598 / 0.635, mean supply 0.717 / 0.716 / 0.716 / 0.712 / 0.707.
+Under shift (return): alpha=2 DQN -8.80, PPO+DR -9.15 vs tuned schedule -10.81; small tanks DQN -16.48 (significantly better) and PPO+DR -17.57 (tie) vs -17.62. The tuned schedule is significantly better than RL in most other conditions.
+Fairness sweep (PPO, lambda 0 / 0.5 / 1 / 2 / 4): worst-zone 0.573 / 0.586 / 0.601 / 0.598 / 0.635, mean supply 0.718 / 0.716 / 0.716 / 0.712 / 0.708.
 Claims we may NOT make (from the literature audit): "first/novel" without "in our search"; "RL beats optimised schedules" without "under the shifts we tested"; "constrained/Lagrangian RL" (our lambda is a reward penalty); results transfer to real networks.
 
 ## Results v1 (superseded: v1 was saturated, PPO at 99% of the supply ceiling; kept for the record)

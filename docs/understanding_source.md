@@ -64,18 +64,18 @@ Answer: **unclear (confidence low-medium)**. No paper was found combining RL, in
 Allowed wording: "To our knowledge, based on a targeted search, this is an exploratory study applying RL to equity-aware valve scheduling in intermittent supply; adaptive control helped under the shifts we tested, not in-distribution." Not allowed: "first/novel" without the qualifier, "RL beats optimised schedules" without "under the shifts we tested", "constrained/Lagrangian RL", "robust" in general, "statistically significant" without stating seeds and CIs, results transfer to real networks. Note also that our household tanks sit outside the EPANET hydraulics (a simplification relative to Hendrickson & Sela).
 
 ### Final M1 results (2 Nov morning): tuned fixed schedule, ablations, fairness Pareto
-Source files: `results_v2/summary.csv`, `results_v2/paired_vs_ce_tuned.csv`, figures in `results_v2/figs/` (`pareto.png`, `regime_map.png`). Script: `analyze_final.py`. CIs are paired bootstraps over test scenarios only; training-seed variance is excluded. PPO has 5 seeds, ppo_dr/DQN/no-equity 3, tuned schedule 3 (CE 40 iterations, population 60), lambda sweep 2 per point.
+Source files: `results_v2/summary.csv`, `results_v2/paired_vs_ce_tuned.csv`, figures in `results_v2/figs/` (`pareto.png`, `regime_map.png`). Script: `analyze_final.py`. CIs are paired bootstraps over test scenarios only; training-seed variance is excluded. PPO, PPO+DR, DQN and no-equity have 5 seeds each, tuned schedule 3 (CE 40 iterations, population 60), lambda sweep 2-3 per point (after the 2 Nov seed top-up).
 
 | Condition | PPO | PPO+DR | DQN | No-equity | Tuned schedule |
 |---|---|---|---|---|---|
-| default (return) | -9.67 | -9.88 | -10.04 | -10.00 | -9.15 |
-| alpha=2 (demand surge, shifted) | -9.67 | -9.14 | -8.31 | -10.09 | -10.81 |
-| small tanks (shifted) | -17.77 | -17.20 | -16.43 | -18.50 | -17.62 |
-| alpha=8 | -11.18 | -10.88 | -11.88 | -11.49 | -10.98 |
+| default (return) | -9.67 | -9.92 | -10.02 | -10.14 | -9.15 |
+| alpha=2 (demand surge, shifted) | -9.67 | -9.15 | -8.80 | -9.66 | -10.81 |
+| small tanks (shifted) | -17.77 | -17.57 | -16.48 | -18.55 | -17.62 |
+| alpha=8 | see `summary.csv` | | | | -10.98 |
 
 - **The tuned fixed schedule beats plain PPO in the normal setting** (paired, significant), and in most conditions on both return and worst-zone supply. Our earlier "PPO beats the fixed schedule" was an artefact of an under-tuned baseline.
-- **RL significantly beats the tuned schedule where conditions shift**: alpha=2 (all RL methods, return and worst-zone), small tanks (DQN and PPO+DR on return), scarce (return, DQN/PPO/PPO+DR). A fixed schedule cannot react to these.
-- **Fairness weight lambda** (PPO, default): worst-zone 0.571 (lambda 0) to 0.635 (lambda 4) for a mean-supply cost of 0.010; node-level Gini does not improve. Removing the equity term lowers worst-zone supply (0.573 vs 0.601).
+- **RL significantly beats the tuned schedule where conditions shift**: alpha=2 (all RL methods, return and worst-zone), small tanks (DQN on return; PPO+DR ties), scarce (return, DQN/PPO/PPO+DR). A fixed schedule cannot react to these.
+- **Fairness weight lambda** (PPO, default): worst-zone 0.573 (lambda 0) to 0.635 (lambda 4) for a mean-supply cost of 0.010; node-level Gini does not improve. Removing the equity term lowers worst-zone supply (0.564 vs 0.601).
 - **Honest limits:** tuned schedule overfits its training scenarios somewhat (train -7.4, test -9.15); single network; assumed parameters; the lambda points have 2 seeds; the novelty claim is unverified (literature audit pending).
 - **Story:** RL is not better everywhere. It matters when the system differs from what a schedule was tuned for, and the equity weight gives a controllable fairness trade-off.
 

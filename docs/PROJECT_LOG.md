@@ -111,3 +111,8 @@ Not yet done: paired CIs for these comparisons, regime map, pdf edition 3.
 
 ## 2 Nov 07:00 - paired CIs vs tuned schedule (analyze_final.py)
 results_v2/paired_vs_ce_tuned.csv. Return: tuned schedule significantly better than ppo/ppo_dr/dqn/noequity in default, abundant, five_days, noisy, press10, press30; RL significantly better at alpha2 (all), scarce (dqn/ppo/ppo_dr), small_tanks (dqn, ppo_dr). Worst-zone: same pattern, plus ppo_dr better at small_tanks. Figures results_v2/figs/pareto.png, regime_map.png. understanding.pdf edition 3 built.
+
+## 2 Nov 14:45 - seed top-up finished (jobs_M1_seeds.txt; 506 eval jobs, 27,600 episodes)
+PPO+DR, DQN, no-equity now 5 seeds each; lambda 0 and 4 now 3 seeds; lambda 0.5 and 2 stay at 2; tuned schedule 3. Previous summary kept as results_v2/pre_seeds_summary.csv.
+Default return / mean_sr / worst-zone: ppo -9.67/0.716/0.601; ppo_dr -9.92/0.711/0.612; dqn -10.02/0.714/0.590; no-equity -10.14/0.718/0.564; ce_tuned -9.15/0.716/0.630. Lambda 0/0.5/1/2/4 worst-zone 0.573/0.586/0.601/0.598/0.635.
+What changed: small_tanks, PPO+DR vs tuned schedule moved from "better" to "tie" (DQN still better); alpha2 DQN -8.80 (was -8.31), all RL still significantly better; scarce no-equity now significantly worse on return. All other conclusions unchanged: tuned schedule wins in-distribution; RL wins under alpha2, DQN under small tanks, return under scarce.
