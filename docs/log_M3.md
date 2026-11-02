@@ -46,3 +46,9 @@ Files added (all new, no existing file edited): `docs/related_work.md`, `docs/as
 3. A seed-8 retry with its own TEMP stopped without any error or output after ~3.5 h. Cause unknown.
 4. No checkpointing: every crash loses the whole run. Suggested fixes (M1's call): retry on EpanetException, periodic `model.save`, per-environment temp folders.
 **Method used for the successful runs:** detached hidden processes, `IWS_V2=1`, one working folder per seed under `D:\projects\iws-rl_runs\` (outside the repo). Seed 5 needed a second attempt.
+
+## 2026-11-02 - plots and slide outline refreshed on M1's final results
+- `plots/make_plots.py`: new `--lambda-sweep` option (PPO lambda sweep from `summary.csv`), labels for `ce_tuned` and lambda families, UTF-8 table output. Regenerated `plots/out/` with `--baseline ce_tuned --lambda-sweep` (default condition, 18 methods, scarce excluded from heatmaps).
+- `presentation/outline.md` rewritten: the old story (PPO about equal to the CE schedule) was based on the early 1-seed CE schedule. With the tuned schedule: PPO ties on mean supply, loses on worst zone (-0.030) and return (-0.52, M1's paired CIs); RL wins only at alpha=2 (all three RL methods) and DQN at small tanks. Slide 10 (learning curves): NO DATA in repo. Oracle row uses 30 scenarios vs 100 for the rest: flagged on the slide.
+- `docs/assumptions.md`: stale statements about the CE schedule and the greedy_k1 comparison corrected.
+- Not checked: M1's `results_v2/figs/` (M1's own figures) were not compared with mine; table values match M1's README.

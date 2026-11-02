@@ -28,6 +28,7 @@ p.add_argument("--condition", default="default", help="condition used for the ba
 p.add_argument("--baseline", default="ce_schedule", help="method family that differences are measured against")
 p.add_argument("--exclude-methods", default="", help="comma-separated families to hide")
 p.add_argument("--include-scarce", action="store_true", help="keep the degenerate 'scarce' condition in the heatmap")
+p.add_argument("--lambda-sweep", action="store_true", help="draw the PPO lambda sweep from summary.csv (families ppo_lam*)")
 a = p.parse_args()
 
 summary_path = a.summary or os.path.join(a.results_dir, "summary.csv")
@@ -43,7 +44,8 @@ S = S[~S.family.isin(hide)]
 if a.condition not in set(S.condition):
     sys.exit(f"condition '{a.condition}' not in {summary_path}; available: {sorted(set(S.condition))}")
 
-LABEL = {"ppo": "PPO", "ce_schedule": "CE schedule", "greedy_k1": "Greedy k1", "greedy_k2": "Greedy k2",
+LABEL = {"ppo": "PPO", "ce_schedule": "Old CE schedule (under-tuned)", "ce_tuned": "Tuned fixed schedule",
+         "ppo_lam0": "PPO λ=0", "ppo_lam0.5": "PPO λ=0.5", "ppo_lam2": "PPO λ=2", "ppo_lam4": "PPO λ=4", "greedy_k1": "Greedy k1", "greedy_k2": "Greedy k2",
          "priv_greedy_k1": "Privileged greedy", "random": "Random", "all_open": "All open", "rota_k1": "Rota k1",
          "dqn": "DQN", "ppo_noequity": "PPO no-equity", "ppo_noforecast": "PPO no-forecast",
          "rec": "LSTM PPO", "rec_dr": "LSTM PPO + DR", "ppo_dr": "PPO + DR", "a2c": "A2C", "ppo_long": "PPO 500k"}
@@ -87,6 +89,29 @@ else:
     print(f"[skip] oracle point: {oracle_path} not found")
 ax.set_xlabel("Mean supply ratio"); ax.set_ylabel("Worst-zone supply ratio"); ax.set_title(f"Efficiency vs equity ({a.condition})"); ax.grid(alpha=.3)
 save(fig, "scatter_mean_vs_worst.png")
+
+# 2b. lambda sweep straight from summary.csv (families ppo_lam0, ppo_lam0.5, ppo (=lambda 1), ppo_lam2, ppo_lam4)
+if a.lambda_sweep:
+    LAM = [("ppo_lam0", 0.0), ("ppo_lam0.5", 0.5), ("ppo", 1.0), ("ppo_lam2", 2.0), ("ppo_lam4", 4.0)]
+    L = D.set_index("family"); pts = [(lm, L.loc[f]) for f, lm in LAM if f in L.index]
+    if len(pts) >= 3:
+        fig, ax = plt.subplots(figsize=(6.4, 5))
+        xs = [r.mean_sr for _, r in pts]; ys = [r.min_zone_sr for _, r in pts]
+        ax.plot(xs, ys, "-", color="#999", zorder=1)
+        for lm, r in pts:
+            ax.errorbar(r.mean_sr, r.min_zone_sr, xerr=[[r.mean_sr - r.mean_sr_lo], [r.mean_sr_hi - r.mean_sr]],
+                        yerr=[[r.min_zone_sr - r.min_zone_sr_lo], [r.min_zone_sr_hi - r.min_zone_sr]], fmt="o", color="#4C78A8", capsize=2, zorder=2)
+            ax.annotate(f"λ={lm:g} ({int(r.n_seeds)} seeds)", (r.mean_sr, r.min_zone_sr), textcoords="offset points", xytext=(5, -11), fontsize=7)
+        for f, nm, c in [(a.baseline, lab(a.baseline), "#F58518"), ("dqn", "DQN", "#54A24B"), ("ppo_dr", "PPO + DR", "#B279A2")]:
+            if f in L.index:
+                r = L.loc[f]; ax.errorbar(r.mean_sr, r.min_zone_sr, xerr=[[r.mean_sr - r.mean_sr_lo], [r.mean_sr_hi - r.mean_sr]],
+                                          yerr=[[r.min_zone_sr - r.min_zone_sr_lo], [r.min_zone_sr_hi - r.min_zone_sr]], fmt="s", color=c, capsize=2)
+                ax.annotate(nm, (r.mean_sr, r.min_zone_sr), textcoords="offset points", xytext=(5, 4), fontsize=7)
+        ax.set_xlabel("Mean supply ratio"); ax.set_ylabel("Worst-zone supply ratio")
+        ax.set_title(f"Equity weight λ in the PPO reward ({a.condition}); a reward penalty, not a constraint", fontsize=8); ax.grid(alpha=.3)
+        save(fig, "pareto_lambda.png")
+    else:
+        print("[skip] lambda sweep: fewer than 3 lambda families in summary")
 
 # 3. pareto from an external sweep (M2), if given
 if a.pareto:
@@ -153,6 +178,6 @@ md = ["| Method | seeds | mean supply [95% CI] | worst zone [95% CI] | hidden in
 for _, r in T.iterrows():
     md.append(f"| {lab(r.family)} | {int(r.n_seeds)} | {r.mean_sr:.3f} [{r.mean_sr_lo:.3f}, {r.mean_sr_hi:.3f}] | "
               f"{r.min_zone_sr:.3f} [{r.min_zone_sr_lo:.3f}, {r.min_zone_sr_hi:.3f}] | {'yes' if r.uses_hidden_info else ''} |")
-open(os.path.join(a.out_dir, "results_table.md"), "w").write(f"Condition: {a.condition}. Source: {summary_path}\n\n" + "\n".join(md) + "\n")
+open(os.path.join(a.out_dir, "results_table.md"), "w", encoding="utf-8").write(f"Condition: {a.condition}. Source: {summary_path}\n\n" + "\n".join(md) + "\n")
 saved += [os.path.join(a.out_dir, "results_table.csv"), os.path.join(a.out_dir, "results_table.md")]
 print("wrote:\n  " + "\n  ".join(saved))

@@ -40,9 +40,9 @@ Source of values: `iws_env.py`, `v2cfg.py`, `eval_all.py`. "Evidence" = what sup
 - v1 environment was saturated: mean supply is capped near 0.773 by water volume, so v1 mean-supply comparisons say little (see `docs/reference/improvements_for_ref.md` section 2).
 - Scarce condition: every method scores 0.44-0.47 (capped by total water). Judge only worst-zone / fairness there.
 - The clairvoyant oracle sees future budgets and tank levels; it is an upper bound, not an achievable policy. Gate 1 failed on the plan's thresholds (+0.013 mean, +0.019 worst-zone).
-- `ce_schedule` is cross-entropy search, not Bayesian optimisation, and stopped while still improving; M2 is rerunning it (3 seeds).
+- The fixed-schedule baseline is cross-entropy search, not Bayesian optimisation. The first version (`ce_schedule`, 1 run) stopped while still improving; the tuned version (`ce_tuned`, 40 iterations, population 60, 3 runs) is the one to compare against. It was tuned on the default condition only.
 - PPO vs the optimised fixed schedule is within ~0.01 mean supply and PPO is slightly worse on worst-zone (v2). No claim of "RL beats optimised scheduling" is supported.
-- `paired_vs_greedy.csv` compares against `greedy_k1`, the weakest strong baseline; compare against `ce_schedule` instead.
+- `paired_vs_greedy.csv` compares against `greedy_k1`, a weak baseline; use `paired_vs_ce_tuned.csv` (M1) instead.
 - Test seeds are 10000+ (100 scenarios default, 50 other conditions). Oracle: 30 scenarios.
 - Bootstrap CIs are over scenarios; seed-to-seed spread is reported separately (`*_seed_sd`).
 - Models were trained for different step counts in different places (150k v1, 300k v2, 500k long): always report the count.
